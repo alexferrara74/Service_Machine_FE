@@ -149,3 +149,4 @@ Le tabelle per piani cliente, periodi e interventi devono esistere prima di usar
 4. `src/main/resources/db/manual/20261029_manutenzione_cliente.sql`
 
 La migrazione 20261029 non copia automaticamente piani precedenti salvati per noleggio, perché per lo stesso cliente potrebbero essere diversi. I vecchi dati vengono lasciati intatti ma non determinano più le scadenze: configurare il nuovo piano condiviso dalla scheda cliente. Le manutenzioni già registrate restano associate ai singoli noleggi. Le modifiche FE non applicano automaticamente migrazioni al database.
+# Service_Machine_FE
