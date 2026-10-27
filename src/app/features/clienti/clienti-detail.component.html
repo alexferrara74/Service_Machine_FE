@@ -1,0 +1,179 @@
+<div class="page">
+  <div class="page-header">
+    <h1>{{ isNew ? '+ Nuovo Cliente' : '✏️ Modifica Cliente' }}</h1>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="goBack()">← Indietro</button>
+      <button *ngIf="!isNew" class="btn btn-danger" (click)="deleteItem()">🗑️ Elimina</button>
+    </div>
+  </div>
+  <div class="card">
+    <div *ngIf="loading" class="loading">⏳ Caricamento...</div>
+    <div *ngIf="error" class="error-block">⚠️ {{ error }}</div>
+    <form *ngIf="!loading" (ngSubmit)="save()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Codice</label>
+          <input type="text" [(ngModel)]="form.codice" name="codice" class="form-control" placeholder="Codice" />
+        </div>
+        <div class="form-group">
+          <label>Ragione Sociale</label>
+          <input type="text" [(ngModel)]="form.ragioneSociale" name="ragioneSociale" class="form-control" placeholder="Ragione Sociale" />
+        </div>
+        <div class="form-group">
+          <label>Nome</label>
+          <input type="text" [(ngModel)]="form.nome" name="nome" class="form-control" placeholder="Nome" />
+        </div>
+        <div class="form-group">
+          <label>Cognome</label>
+          <input type="text" [(ngModel)]="form.cognome" name="cognome" class="form-control" placeholder="Cognome" />
+        </div>
+        <div class="form-group">
+          <label>Codice Fiscale</label>
+          <input type="text" [(ngModel)]="form.codiceFiscale" name="codiceFiscale" class="form-control" placeholder="Codice Fiscale" />
+        </div>
+        <div class="form-group">
+          <label>Partita IVA</label>
+          <input type="text" [(ngModel)]="form.partitaIva" name="partitaIva" class="form-control" placeholder="Partita IVA" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" [(ngModel)]="form.email" name="email" class="form-control" placeholder="Email" />
+        </div>
+        <div class="form-group">
+          <label>Telefono</label>
+          <input type="text" [(ngModel)]="form.telefono" name="telefono" class="form-control" placeholder="Telefono" />
+        </div>
+        <div class="form-group">
+          <label>Tipo Listino</label>
+          <input type="number" [(ngModel)]="form.tipoListino" name="tipoListino" class="form-control" placeholder="Tipo Listino" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          {{ saving ? 'Salvataggio...' : '💾 Salva' }}
+        </button>
+      </div>
+    </form>
+    <section *ngIf="!isNew && id !== null" class="maintenance-settings">
+      <h2>Parametri manutenzione del cliente</h2>
+      <p class="section-help">
+        Questa pianificazione è condivisa da tutte le attrezzature a noleggio del cliente.
+        La scadenza di ciascuna macchina resta calcolata dalla propria ultima manutenzione ordinaria.
+      </p>
+      <div *ngIf="maintenanceSettingsError" class="error-block">{{ maintenanceSettingsError }}</div>
+      <div *ngIf="maintenanceSettingsLoading" class="loading">Caricamento configurazione...</div>
+      <ng-container *ngIf="!maintenanceSettingsLoading">
+        <p *ngIf="!maintenancePlanConfigured" class="configuration-hint">
+          Configura almeno un intervallo stagionale per attivare il monitoraggio dei noleggi.
+          Il valore iniziale di 7 giorni è solo una proposta fino al salvataggio.
+        </p>
+        <p *ngIf="maintenancePlanConfigured" class="configuration-hint configured">
+          Configurazione attiva e condivisa con tutti i noleggi di questo cliente.
+        </p>
+        <div class="schedule-fields">
+          <div class="form-group">
+            <label>Avviso prima della scadenza (giorni)</label>
+            <input type="number" min="0" step="1" [(ngModel)]="noticeDays" name="noticeDays" class="form-control" />
+            <small class="field-help">Esempio: 7 indica “In scadenza” nei sette giorni prima della data prevista.</small>
+          </div>
+        </div>
+        <h3>Intervalli stagionali</h3>
+        <div *ngFor="let period of maintenancePeriods; let i = index" class="period-row">
+          <div class="form-group">
+            <label>Dal</label>
+            <input type="date" [(ngModel)]="period.dataInizio" [name]="'period-start-' + i" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Al</label>
+            <input type="date" [(ngModel)]="period.dataFine" [name]="'period-end-' + i" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Manutenzione ogni (giorni)</label>
+            <input type="number" min="1" step="1" [(ngModel)]="period.intervalloGiorni" [name]="'period-interval-' + i" class="form-control" />
+          </div>
+          <button type="button" class="btn btn-secondary" (click)="removeMaintenancePeriod(i)">Rimuovi</button>
+        </div>
+        <button type="button" class="btn btn-secondary" (click)="addMaintenancePeriod()">+ Aggiungi stagione</button>
+        <div *ngIf="maintenancePlanError" class="error-block">{{ maintenancePlanError }}</div>
+        <div *ngIf="maintenancePlanSaved" class="success-block">Configurazione cliente salvata.</div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary" [disabled]="maintenancePlanSaving" (click)="saveMaintenanceSchedule()">
+            {{ maintenancePlanSaving ? 'Salvataggio...' : 'Salva parametri per tutti i noleggi' }}
+          </button>
+        </div>
+      </ng-container>
+    </section>
+
+    <section *ngIf="!isNew && id !== null && filteredStatistics as stats" class="sales-section">
+      <h2>Statistiche vendite del cliente</h2>
+      <p class="section-help">I prodotti sono totali cliente e non sono attribuiti a una singola macchina.</p>
+      <div class="statistics-toolbar">
+        <div class="statistics-summary">
+          <div><span>Quantità acquistata</span><strong>{{ stats.quantitaTotaleAcquistata }}</strong></div>
+          <div><span>Righe di vendita</span><strong>{{ stats.righeVendita }}</strong></div>
+        </div>
+        <div class="statistics-filters">
+          <label>Dal <input type="date" [(ngModel)]="statisticsDal" name="statisticsDal" class="form-control" /></label>
+          <label>Al <input type="date" [(ngModel)]="statisticsAl" name="statisticsAl" class="form-control" /></label>
+          <button type="button" class="btn btn-secondary" [disabled]="statisticsLoading" (click)="loadStatisticsForPeriod()">
+            {{ statisticsLoading ? 'Attendi...' : 'Filtra' }}
+          </button>
+        </div>
+      </div>
+      <p class="statistics-period">Periodo: {{ stats.dal || 'inizio storico' }} – {{ stats.al || 'oggi' }}</p>
+      <div *ngIf="statisticsError" class="error-block">{{ statisticsError }}</div>
+      <details class="secondary-details">
+        <summary>Mostra dettaglio vendite</summary>
+        <div class="statistics-tables">
+          <section>
+            <h3>Prodotti acquistati</h3>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Prodotto</th><th>Categoria</th><th>Quantità</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let product of stats.venditePerProdotto">
+                    <td>{{ product.codiceArticolo }} {{ product.descrizione }}</td>
+                    <td>{{ product.categoria || '—' }}</td>
+                    <td>{{ product.quantitaTotale }}</td>
+                  </tr>
+                  <tr *ngIf="!stats.venditePerProdotto.length"><td colspan="3">Nessun acquisto nel periodo.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section>
+            <h3>Vendite per categoria</h3>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Categoria</th><th>Quantità</th><th>Righe</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let category of stats.venditePerCategoria">
+                    <td>{{ category.categoria || ('Categoria ' + category.categoriaId) }}</td>
+                    <td>{{ category.quantitaTotale }}</td>
+                    <td>{{ category.righeVendita }}</td>
+                  </tr>
+                  <tr *ngIf="!stats.venditePerCategoria.length"><td colspan="3">Nessun acquisto nel periodo.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+        <details class="secondary-details">
+          <summary>Andamento mensile</summary>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Anno</th><th>Mese</th><th>Quantità</th><th>Righe</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let month of stats.andamentoMensile">
+                  <td>{{ month.anno }}</td><td>{{ month.mese }}</td>
+                  <td>{{ month.quantitaTotale }}</td><td>{{ month.righeVendita }}</td>
+                </tr>
+                <tr *ngIf="!stats.andamentoMensile.length"><td colspan="4">Nessun acquisto nel periodo.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </details>
+    </section>
+  </div>
+</div>

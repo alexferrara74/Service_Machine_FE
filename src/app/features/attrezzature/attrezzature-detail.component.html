@@ -1,0 +1,47 @@
+<div class="page">
+  <div class="page-header">
+    <h1>{{ isNew ? '+ Nuova Attrezzatura' : '✏️ Modifica Attrezzatura' }}</h1>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="goBack()">← Indietro</button>
+      <button *ngIf="!isNew" class="btn btn-danger" (click)="deleteItem()">🗑️ Elimina</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div *ngIf="loading" class="loading">⏳ Caricamento...</div>
+    <div *ngIf="error" class="error-block">⚠️ {{ error }}</div>
+
+    <form *ngIf="!loading" (ngSubmit)="save()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Matricola</label>
+          <input type="text" [(ngModel)]="form.matricola" name="matricola" class="form-control" placeholder="Matricola" />
+        </div>
+        <div class="form-group">
+          <label>Descrizione</label>
+          <input type="text" [(ngModel)]="form.descrizione" name="descrizione" class="form-control" placeholder="Descrizione" />
+        </div>
+        <div class="form-group">
+          <label>Marca</label>
+          <input type="text" [(ngModel)]="form.marca" name="marca" class="form-control" placeholder="Marca" />
+        </div>
+        <div class="form-group">
+          <label>Modello</label>
+          <input type="text" [(ngModel)]="form.modello" name="modello" class="form-control" placeholder="Modello" />
+        </div>
+        <div class="form-group">
+          <label>Stato</label>
+          <select [(ngModel)]="form.stato" name="stato" class="form-control">
+            <option value="">-- Seleziona stato --</option>
+            <option *ngFor="let s of statiOptions" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          {{ saving ? 'Salvataggio...' : '💾 Salva' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

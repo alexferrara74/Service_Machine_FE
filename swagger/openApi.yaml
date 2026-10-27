@@ -1,0 +1,2168 @@
+openapi: 3.0.1
+info:
+  title: Gestionale Magazzino & Interventi
+  description: API REST del gestionale
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Generated server url
+tags:
+  - name: Storia Noleggi
+    description: Consultazione e gestione storico contratti e documenti di noleggio
+  - name: Manutenzione noleggi
+    description: Pianificazione stagionale e storico manutenzioni per attrezzatura a noleggio
+  - name: Manutenzione clienti
+    description: Configurazione condivisa dei periodi manutentivi per cliente
+  - name: Statistiche clienti
+    description: Statistiche di vendita e stime aggregate per cliente
+  - name: Attrezzature
+    description: Gestione anagrafica attrezzature
+  - name: Interventi
+    description: Gestione interventi tecnici
+  - name: Clienti
+    description: Anagrafica clienti
+  - name: Magazzino Posizioni
+    description: Gestione giacenze e posizioni articoli a magazzino
+  - name: Storia Prodotti
+    description: Consultazione e gestione storico prodotti e consumi clienti
+  - name: Sync
+    description: API per sincronizzazione con client esterni/offline
+  - name: Magazzino
+    description: Gestione ubicazioni di magazzino
+paths:
+  /api/storia/prodotti/{id}:
+    get:
+      tags:
+        - Storia Prodotti
+      summary: Dettaglio voce storico prodotto per ID
+      operationId: getById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoriaProdottoResponse'
+    put:
+      tags:
+        - Storia Prodotti
+      summary: Aggiorna voce storico prodotto
+      operationId: update
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoriaProdottoRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoriaProdottoResponse'
+    delete:
+      tags:
+        - Storia Prodotti
+      summary: Elimina voce storico prodotto
+      operationId: delete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: No Content
+  /api/storia/noleggi/{docId}:
+    get:
+      tags:
+        - Storia Noleggi
+      summary: Dettaglio noleggio per ID documento
+      operationId: getById_1
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoriaNoleggioResponse'
+    put:
+      tags:
+        - Storia Noleggi
+      summary: Aggiorna documento di noleggio
+      operationId: update_1
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoriaNoleggioRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoriaNoleggioResponse'
+    delete:
+      tags:
+        - Storia Noleggi
+      summary: Elimina documento di noleggio
+      operationId: delete_1
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: No Content
+  /api/storia/noleggi/{docId}/manutenzione:
+    get:
+      tags:
+        - Manutenzione noleggi
+      summary: Stato e prossima scadenza manutentiva del noleggio
+      operationId: getManutenzioneNoleggio
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Stato manutenzione
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoleggioManutenzioneResponse'
+  /api/storia/noleggi/{docId}/manutenzione/configurazione:
+    put:
+      tags:
+        - Manutenzione noleggi
+      summary: Configura le categorie usate per la stima aggregata del cliente
+      operationId: configuraManutenzioneNoleggio
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoleggioManutenzioneConfigurazioneRequest'
+      responses:
+        '200':
+          description: Configurazione e stato manutenzione
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoleggioManutenzioneResponse'
+  /api/storia/noleggi/{docId}/manutenzione/eventi:
+    get:
+      tags:
+        - Manutenzione noleggi
+      summary: Elenco manutenzioni effettuate per il noleggio
+      operationId: getEventiManutenzioneNoleggio
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Elenco manutenzioni
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NoleggioManutenzioneEventoResponse'
+    post:
+      tags:
+        - Manutenzione noleggi
+      summary: Registra una manutenzione ordinaria quando dovuta
+      operationId: registraManutenzioneNoleggio
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoleggioManutenzioneRequest'
+      responses:
+        '201':
+          description: Manutenzione registrata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoleggioManutenzioneEventoResponse'
+  /api/storia/noleggi/{docId}/manutenzione/eventi/straordinaria:
+    post:
+      tags:
+        - Manutenzione noleggi
+      summary: Registra una manutenzione straordinaria per guasto o segnalazione
+      operationId: registraManutenzioneStraordinariaNoleggio
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoleggioManutenzioneRequest'
+      responses:
+        '201':
+          description: Manutenzione straordinaria registrata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoleggioManutenzioneEventoResponse'
+  /api/clienti/{clienteId}/manutenzione/pianificazione:
+    get:
+      tags:
+        - Manutenzione clienti
+      summary: Legge la pianificazione stagionale condivisa del cliente
+      operationId: getPianificazioneManutenzioneCliente
+      parameters:
+        - name: clienteId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Configurazione manutentiva del cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteManutenzionePianificazioneResponse'
+        '404':
+          description: Pianificazione non ancora configurata
+    put:
+      tags:
+        - Manutenzione clienti
+      summary: Configura una pianificazione condivisa tra i noleggi del cliente
+      operationId: configuraPianificazioneManutenzioneCliente
+      parameters:
+        - name: clienteId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoleggioManutenzionePianificazioneRequest'
+      responses:
+        '200':
+          description: Configurazione manutentiva salvata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteManutenzionePianificazioneResponse'
+        '400':
+          description: Date, intervalli o periodi non validi o sovrapposti
+  /api/statistiche/clienti/{clienteId}:
+    get:
+      tags:
+        - Statistiche clienti
+      summary: Legge statistiche vendite e stime per il cliente
+      operationId: getStatisticheCliente
+      parameters:
+        - name: clienteId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: dal
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: al
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Statistiche e stime aggregate del cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteStatisticheResponse'
+  /api/magazzino/{id}:
+    get:
+      tags:
+        - Magazzino
+      operationId: getById_2
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MagazzinoResponse'
+    put:
+      tags:
+        - Magazzino
+      operationId: update_2
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MagazzinoRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MagazzinoResponse'
+    delete:
+      tags:
+        - Magazzino
+      operationId: delete_2
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: No Content
+  /api/magazzino/posizioni/{id}:
+    get:
+      tags:
+        - Magazzino Posizioni
+      summary: Dettaglio posizione articolo per ID
+      operationId: getById_3
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosizioneArticoloResponse'
+    put:
+      tags:
+        - Magazzino Posizioni
+      summary: Aggiorna posizione articolo
+      operationId: update_3
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PosizioneArticoloRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosizioneArticoloResponse'
+    delete:
+      tags:
+        - Magazzino Posizioni
+      summary: Elimina posizione articolo
+      operationId: delete_3
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: No Content
+  /api/interventi/{id}:
+    get:
+      tags:
+        - Interventi
+      summary: Dettaglio intervento
+      operationId: getById_4
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterventoResponse'
+    put:
+      tags:
+        - Interventi
+      summary: Aggiorna intervento
+      operationId: update_4
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterventoRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterventoResponse'
+    delete:
+      tags:
+        - Interventi
+      operationId: delete_4
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: No Content
+  /api/clienti/{id}:
+    get:
+      tags:
+        - Clienti
+      summary: Dettaglio cliente per ID
+      operationId: getById_5
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteResponse'
+    put:
+      tags:
+        - Clienti
+      summary: Aggiorna cliente esistente
+      operationId: update_5
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteResponse'
+    delete:
+      tags:
+        - Clienti
+      summary: Elimina cliente
+      operationId: delete_5
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: No Content
+  /api/attrezzature/{id}:
+    get:
+      tags:
+        - Attrezzature
+      summary: Dettaglio attrezzatura per ID
+      operationId: getById_6
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttrezzaturaResponse'
+    put:
+      tags:
+        - Attrezzature
+      summary: Aggiorna attrezzatura
+      operationId: update_6
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttrezzaturaRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttrezzaturaResponse'
+    delete:
+      tags:
+        - Attrezzature
+      summary: Elimina attrezzatura
+      operationId: delete_6
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: No Content
+  /api/sync/intervento:
+    post:
+      tags:
+        - Sync
+      summary: Sincronizza intervento completo (testata + ricambi)
+      operationId: syncIntervento
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncInterventoRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncInterventoResponse'
+  /api/storia/prodotti:
+    get:
+      tags:
+        - Storia Prodotti
+      summary: Lista tutte le voci dello storico prodotti
+      operationId: getAll
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoriaProdottoResponse'
+    post:
+      tags:
+        - Storia Prodotti
+      summary: Registra voce storico prodotto
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoriaProdottoRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoriaProdottoResponse'
+  /api/storia/noleggi:
+    get:
+      tags:
+        - Storia Noleggi
+      summary: Lista tutti i documenti di noleggio
+      operationId: getAll_1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoriaNoleggioResponse'
+    post:
+      tags:
+        - Storia Noleggi
+      summary: Registra nuovo documento di noleggio
+      operationId: create_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoriaNoleggioRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoriaNoleggioResponse'
+  /api/storia/noleggi/pagina:
+    get:
+      tags:
+        - Storia Noleggi
+      summary: Lista paginata dei documenti di noleggio
+      operationId: getPageNoleggi
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponseStoriaNoleggio'
+  /api/storia/noleggi/cliente/{clienteId}/pagina:
+    get:
+      tags:
+        - Storia Noleggi
+      summary: Lista paginata dei noleggi per cliente
+      operationId: getPageNoleggiByCliente
+      parameters:
+        - name: clienteId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponseStoriaNoleggio'
+  /api/storia/noleggi/articolo/{articoloId}/pagina:
+    get:
+      tags:
+        - Storia Noleggi
+      summary: Lista paginata dei noleggi per articolo
+      operationId: getPageNoleggiByArticolo
+      parameters:
+        - name: articoloId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponseStoriaNoleggio'
+  /api/storia/noleggi/matricola/{matricola}/pagina:
+    get:
+      tags:
+        - Storia Noleggi
+      summary: Lista paginata dei noleggi per matricola
+      operationId: getPageNoleggiByMatricola
+      parameters:
+        - name: matricola
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponseStoriaNoleggio'
+  /api/magazzino:
+    get:
+      tags:
+        - Magazzino
+      operationId: getAll_2
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MagazzinoResponse'
+    post:
+      tags:
+        - Magazzino
+      summary: Crea ubicazione
+      operationId: create_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MagazzinoRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MagazzinoResponse'
+  /api/magazzino/posizioni:
+    get:
+      tags:
+        - Magazzino Posizioni
+      summary: Lista tutte le posizioni articolo
+      operationId: getAll_3
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PosizioneArticoloResponse'
+    post:
+      tags:
+        - Magazzino Posizioni
+      summary: Registra posizione articolo in magazzino
+      operationId: create_3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PosizioneArticoloRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosizioneArticoloResponse'
+  /api/interventi:
+    get:
+      tags:
+        - Interventi
+      summary: Lista interventi (tutti)
+      operationId: getAll_4
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InterventoResponse'
+    post:
+      tags:
+        - Interventi
+      summary: Apri un nuovo intervento
+      operationId: create_4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterventoRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterventoResponse'
+  /api/interventi/{id}/ricambi:
+    get:
+      tags:
+        - Interventi
+      summary: Lista ricambi usati nell'intervento
+      operationId: getRicambi
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RicambioResponse'
+    post:
+      tags:
+        - Interventi
+      summary: Aggiungi ricambio all'intervento
+      operationId: addRicambio
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RicambioRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RicambioResponse'
+  /api/clienti:
+    get:
+      tags:
+        - Clienti
+      summary: Lista tutti i clienti
+      operationId: getAll_5
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClienteResponse'
+    post:
+      tags:
+        - Clienti
+      summary: Crea un nuovo cliente
+      operationId: create_5
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteRequest'
+        required: true
+      responses:
+        '201':
+          description: Cliente creato
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteResponse'
+        '409':
+          description: Codice già esistente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteResponse'
+  /api/attrezzature:
+    get:
+      tags:
+        - Attrezzature
+      summary: Lista tutte le attrezzature
+      operationId: getAll_6
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AttrezzaturaResponse'
+    post:
+      tags:
+        - Attrezzature
+      summary: Crea nuova attrezzatura
+      operationId: create_6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttrezzaturaRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttrezzaturaResponse'
+  /api/storia/prodotti/codice/{codiceArticolo}:
+    get:
+      tags:
+        - Storia Prodotti
+      summary: Lista storico prodotti per codice articolo
+      operationId: getByCodiceArticolo
+      parameters:
+        - name: codiceArticolo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoriaProdottoResponse'
+  /api/storia/prodotti/cliente/{clienteId}:
+    get:
+      tags:
+        - Storia Prodotti
+      summary: Lista storico prodotti per cliente
+      operationId: getByCliente
+      parameters:
+        - name: clienteId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoriaProdottoResponse'
+  /api/storia/prodotti/articolo/{articoloId}:
+    get:
+      tags:
+        - Storia Prodotti
+      summary: Lista storico prodotti per articolo
+      operationId: getByArticolo
+      parameters:
+        - name: articoloId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoriaProdottoResponse'
+  /api/storia/noleggi/matricola/{matricola}:
+    get:
+      tags:
+        - Storia Noleggi
+      summary: Lista noleggi per matricola attrezzatura
+      operationId: getByMatricola
+      parameters:
+        - name: matricola
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoriaNoleggioResponse'
+  /api/storia/noleggi/cliente/{clienteId}:
+    get:
+      tags:
+        - Storia Noleggi
+      summary: Lista noleggi per cliente
+      operationId: getByCliente_1
+      parameters:
+        - name: clienteId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoriaNoleggioResponse'
+  /api/storia/noleggi/articolo/{articoloId}:
+    get:
+      tags:
+        - Storia Noleggi
+      summary: Lista noleggi per articolo
+      operationId: getByArticolo_1
+      parameters:
+        - name: articoloId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoriaNoleggioResponse'
+  /api/magazzino/posizioni/ubicazione/{ubicazioneId}:
+    get:
+      tags:
+        - Magazzino Posizioni
+      summary: Lista articoli in una determinata ubicazione
+      operationId: getByUbicazione
+      parameters:
+        - name: ubicazioneId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PosizioneArticoloResponse'
+  /api/magazzino/posizioni/articolo/{articoloId}:
+    get:
+      tags:
+        - Magazzino Posizioni
+      summary: Lista posizioni occupate da un determinato articolo
+      operationId: getByArticolo_2
+      parameters:
+        - name: articoloId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PosizioneArticoloResponse'
+  /api/magazzino/posizioni/articolo/{articoloId}/giacenza:
+    get:
+      tags:
+        - Magazzino Posizioni
+      summary: Calcola giacenza totale articolo su tutte le ubicazioni
+      operationId: getGiacenzaTotale
+      parameters:
+        - name: articoloId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+  /api/interventi/cliente/{clienteId}:
+    get:
+      tags:
+        - Interventi
+      summary: Lista interventi per cliente
+      operationId: getByCliente_2
+      parameters:
+        - name: clienteId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InterventoResponse'
+  /api/attrezzature/stato/{stato}:
+    get:
+      tags:
+        - Attrezzature
+      summary: Filtra attrezzature per stato
+      operationId: getByStato
+      parameters:
+        - name: stato
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AttrezzaturaResponse'
+  /api/attrezzature/matricola/{matricola}:
+    get:
+      tags:
+        - Attrezzature
+      summary: Dettaglio attrezzatura per matricola
+      operationId: getByMatricola_1
+      parameters:
+        - name: matricola
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttrezzaturaResponse'
+  /api/attrezzature/marca/{marca}:
+    get:
+      tags:
+        - Attrezzature
+      summary: Filtra attrezzature per marca
+      operationId: getByMarca
+      parameters:
+        - name: marca
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AttrezzaturaResponse'
+  /api/interventi/{id}/ricambi/{ricambioId}:
+    delete:
+      tags:
+        - Interventi
+      operationId: deleteRicambio
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: ricambioId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: No Content
+components:
+  schemas:
+    StoriaProdottoRequest:
+      required:
+        - codiceArticolo
+        - quantita
+      type: object
+      properties:
+        clienteId:
+          type: integer
+          format: int64
+        articoloId:
+          type: integer
+          format: int64
+        codiceArticolo:
+          maxLength: 50
+          minLength: 0
+          type: string
+        descrizione:
+          maxLength: 255
+          minLength: 0
+          type: string
+        categoriaId:
+          type: integer
+          format: int32
+        categoriaDescrizione:
+          maxLength: 255
+          minLength: 0
+          type: string
+        quantita:
+          type: number
+          format: double
+        dataDoc:
+          type: string
+          format: date
+    StoriaProdottoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        clienteId:
+          type: integer
+          format: int64
+        articoloId:
+          type: integer
+          format: int64
+        codiceArticolo:
+          type: string
+        descrizione:
+          type: string
+        categoriaId:
+          type: integer
+          format: int32
+        categoriaDescrizione:
+          type: string
+        quantita:
+          type: number
+          format: double
+        dataDoc:
+          type: string
+          format: date
+        aggiornatoIl:
+          type: string
+          format: date-time
+    StoriaNoleggioRequest:
+      required:
+        - docId
+      type: object
+      properties:
+        docId:
+          type: integer
+          format: int32
+        sezionale:
+          maxLength: 50
+          minLength: 0
+          type: string
+        dataDoc:
+          type: string
+          format: date
+        clienteId:
+          type: integer
+          format: int64
+        articoloId:
+          type: integer
+          format: int64
+        matricola:
+          maxLength: 100
+          minLength: 0
+          type: string
+        quantita:
+          type: number
+          format: double
+    StoriaNoleggioResponse:
+      type: object
+      properties:
+        docId:
+          type: integer
+          format: int32
+        sezionale:
+          type: string
+        dataDoc:
+          type: string
+          format: date
+        clienteId:
+          type: integer
+          format: int64
+        articoloId:
+          type: integer
+          format: int64
+        matricola:
+          type: string
+        quantita:
+          type: number
+          format: double
+        aggiornatoIl:
+          type: string
+          format: date-time
+    PageResponseStoriaNoleggio:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoriaNoleggioResponse'
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
+    NoleggioManutenzioneConfigurazioneRequest:
+      required:
+        - categoriaIds
+      type: object
+      properties:
+        sogliaQuantita:
+          type: number
+          format: double
+          exclusiveMinimum: true
+          minimum: 0
+        ordinariePerStraordinaria:
+          type: integer
+          format: int32
+          minimum: 1
+        categoriaIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: integer
+            format: int32
+            minimum: 1
+    NoleggioManutenzioneRequest:
+      type: object
+      properties:
+        note:
+          maxLength: 2000
+          type: string
+    NoleggioManutenzioneResponse:
+      type: object
+      properties:
+        docId:
+          type: integer
+          format: int32
+        clienteId:
+          type: integer
+          format: int64
+        cliente:
+          type: string
+        articoloId:
+          type: integer
+          format: int64
+        matricola:
+          type: string
+        quantitaNoleggiata:
+          type: number
+          format: double
+        configurata:
+          type: boolean
+        sogliaQuantita:
+          type: number
+          format: double
+          nullable: true
+        ordinariePerStraordinaria:
+          type: integer
+          format: int32
+          nullable: true
+        categoriaIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        quantitaAcquistataTotale:
+          type: number
+          format: double
+        quantitaDopoUltimaManutenzione:
+          type: number
+          format: double
+        quantitaResidua:
+          type: number
+          format: double
+          nullable: true
+        manutenzioniOrdinarieDallUltimaStraordinaria:
+          type: integer
+          format: int32
+        manutenzioneDovuta:
+          type: boolean
+        tipoManutenzioneDovuta:
+          type: string
+          nullable: true
+        ultimaManutenzioneIl:
+          type: string
+          format: date-time
+          nullable: true
+        pianificazioneConfigurata:
+          type: boolean
+        prossimaManutenzioneIl:
+          type: string
+          format: date
+          nullable: true
+        giorniAllaManutenzione:
+          type: integer
+          format: int32
+          nullable: true
+        statoManutenzione:
+          type: string
+          enum:
+            - NON_CONFIGURATA
+            - PROGRAMMATA
+            - IN_SCADENZA
+            - IN_RITARDO
+        intervalloManutenzioneGiorni:
+          type: integer
+          format: int32
+          nullable: true
+    NoleggioManutenzioneEventoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        docId:
+          type: integer
+          format: int32
+        tipo:
+          type: string
+        quantitaAcquistataTotale:
+          type: number
+          format: double
+        eseguitaIl:
+          type: string
+          format: date-time
+        note:
+          type: string
+          nullable: true
+    NoleggioManutenzionePianificazioneRequest:
+      required:
+        - giorniAvviso
+        - periodi
+      type: object
+      properties:
+        giorniAvviso:
+          type: integer
+          format: int32
+          minimum: 0
+        periodi:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/NoleggioManutenzionePeriodoRequest'
+    NoleggioManutenzionePeriodoRequest:
+      required:
+        - dataInizio
+        - dataFine
+        - intervalloGiorni
+      type: object
+      properties:
+        dataInizio:
+          type: string
+          format: date
+        dataFine:
+          type: string
+          format: date
+        intervalloGiorni:
+          type: integer
+          format: int32
+          minimum: 1
+    ClienteManutenzionePianificazioneResponse:
+      type: object
+      properties:
+        clienteId:
+          type: integer
+          format: int64
+        giorniAvviso:
+          type: integer
+          format: int32
+        periodi:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoleggioManutenzionePeriodoResponse'
+    NoleggioManutenzionePeriodoResponse:
+      type: object
+      properties:
+        dataInizio:
+          type: string
+          format: date
+        dataFine:
+          type: string
+          format: date
+        intervalloGiorni:
+          type: integer
+          format: int32
+    ClienteStatisticheResponse:
+      type: object
+      properties:
+        clienteId:
+          type: integer
+          format: int64
+        cliente:
+          type: string
+        dal:
+          type: string
+          format: date
+          nullable: true
+        al:
+          type: string
+          format: date
+          nullable: true
+        quantitaTotaleAcquistata:
+          type: number
+          format: double
+        righeVendita:
+          type: integer
+          format: int64
+        noleggiEStimePerAttrezzatura:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoleggioVenditeStimateResponse'
+        venditePerCategoria:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoriaVenditeStatisticheResponse'
+        venditePerProdotto:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProdottoVenditeStatisticheResponse'
+        andamentoMensile:
+          type: array
+          items:
+            $ref: '#/components/schemas/VenditeMensiliStatisticheResponse'
+    NoleggioVenditeStimateResponse:
+      type: object
+      properties:
+        docId:
+          type: integer
+          format: int32
+        articoloIdAttrezzatura:
+          type: integer
+          format: int64
+          nullable: true
+        matricola:
+          type: string
+          nullable: true
+        quantitaNoleggiata:
+          type: number
+          format: double
+          nullable: true
+        categorieProdottoStimate:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoriaVenditeStatisticheResponse'
+        prodottiAcquistatiStimati:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProdottoVenditeStatisticheResponse'
+        ambitoStima:
+          type: string
+    CategoriaVenditeStatisticheResponse:
+      type: object
+      properties:
+        categoriaId:
+          type: integer
+          format: int32
+          nullable: true
+        categoria:
+          type: string
+          nullable: true
+        quantitaTotale:
+          type: number
+          format: double
+        righeVendita:
+          type: integer
+          format: int64
+    ProdottoVenditeStatisticheResponse:
+      type: object
+      properties:
+        articoloId:
+          type: integer
+          format: int64
+        codiceArticolo:
+          type: string
+          nullable: true
+        descrizione:
+          type: string
+          nullable: true
+        categoriaId:
+          type: integer
+          format: int32
+          nullable: true
+        categoria:
+          type: string
+          nullable: true
+        quantitaTotale:
+          type: number
+          format: double
+        righeVendita:
+          type: integer
+          format: int64
+    VenditeMensiliStatisticheResponse:
+      type: object
+      properties:
+        anno:
+          type: integer
+          format: int32
+        mese:
+          type: integer
+          format: int32
+        quantitaTotale:
+          type: number
+          format: double
+        righeVendita:
+          type: integer
+          format: int64
+    MagazzinoRequest:
+      required:
+        - codiceUbicazione
+        - zona
+      type: object
+      properties:
+        codiceUbicazione:
+          maxLength: 50
+          minLength: 0
+          type: string
+        zona:
+          maxLength: 50
+          minLength: 0
+          type: string
+        scaffale:
+          maxLength: 50
+          minLength: 0
+          type: string
+        ripiano:
+          maxLength: 50
+          minLength: 0
+          type: string
+        capacitaMax:
+          minimum: 1
+          type: integer
+          format: int32
+        note:
+          maxLength: 500
+          minLength: 0
+          type: string
+    MagazzinoResponse:
+      type: object
+      properties:
+        ubicazioneId:
+          type: integer
+          format: int64
+        codiceUbicazione:
+          type: string
+        zona:
+          type: string
+        scaffale:
+          type: string
+        ripiano:
+          type: string
+        capacitaMax:
+          type: integer
+          format: int32
+        note:
+          type: string
+        creatoIl:
+          type: string
+          format: date-time
+        aggiornatoIl:
+          type: string
+          format: date-time
+    PosizioneArticoloRequest:
+      required:
+        - articoloId
+        - quantitaPresente
+        - ubicazioneId
+      type: object
+      properties:
+        ubicazioneId:
+          type: integer
+          format: int64
+        articoloId:
+          type: integer
+          format: int64
+        quantitaPresente:
+          type: integer
+          format: int32
+    PosizioneArticoloResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        ubicazioneId:
+          type: integer
+          format: int64
+        codiceUbicazione:
+          type: string
+        articoloId:
+          type: integer
+          format: int64
+        quantitaPresente:
+          type: integer
+          format: int32
+        aggiornatoIl:
+          type: string
+          format: date-time
+    InterventoRequest:
+      required:
+        - clienteId
+        - dataApertura
+        - stato
+        - titolo
+      type: object
+      properties:
+        clienteId:
+          type: integer
+          format: int64
+        matricolaAttrezzatura:
+          maxLength: 50
+          minLength: 0
+          type: string
+        titolo:
+          maxLength: 255
+          minLength: 0
+          type: string
+        descrizioneProblema:
+          maxLength: 2000
+          minLength: 0
+          type: string
+        soluzioneApplicata:
+          maxLength: 2000
+          minLength: 0
+          type: string
+        stato:
+          maxLength: 50
+          minLength: 0
+          type: string
+        dataApertura:
+          type: string
+          format: date-time
+        dataChiusura:
+          type: string
+          format: date-time
+        costoManodopera:
+          type: number
+    InterventoResponse:
+      type: object
+      properties:
+        interventoId:
+          type: integer
+          format: int64
+        clienteId:
+          type: integer
+          format: int64
+        ragioneSocialeCliente:
+          type: string
+        matricolaAttrezzatura:
+          type: string
+        titolo:
+          type: string
+        descrizioneProblema:
+          type: string
+        soluzioneApplicata:
+          type: string
+        stato:
+          type: string
+        dataApertura:
+          type: string
+          format: date-time
+        dataChiusura:
+          type: string
+          format: date-time
+        costoManodopera:
+          type: number
+    ClienteRequest:
+      required:
+        - codice
+        - ragioneSociale
+      type: object
+      properties:
+        codice:
+          maxLength: 50
+          minLength: 0
+          type: string
+        ragioneSociale:
+          maxLength: 255
+          minLength: 0
+          type: string
+        nome:
+          maxLength: 100
+          minLength: 0
+          type: string
+        cognome:
+          maxLength: 100
+          minLength: 0
+          type: string
+        telefono:
+          maxLength: 30
+          minLength: 0
+          type: string
+        email:
+          maxLength: 255
+          minLength: 0
+          type: string
+        partitaIva:
+          maxLength: 20
+          minLength: 0
+          type: string
+        codiceFiscale:
+          maxLength: 20
+          minLength: 0
+          type: string
+        tipoListino:
+          type: integer
+          format: int32
+    ClienteResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        codice:
+          type: string
+        ragioneSociale:
+          type: string
+        nome:
+          type: string
+        cognome:
+          type: string
+        telefono:
+          type: string
+        email:
+          type: string
+        partitaIva:
+          type: string
+        codiceFiscale:
+          type: string
+        tipoListino:
+          type: integer
+          format: int32
+        aggiornatoIl:
+          type: string
+          format: date-time
+    AttrezzaturaRequest:
+      required:
+        - matricola
+      type: object
+      properties:
+        matricola:
+          maxLength: 50
+          minLength: 0
+          type: string
+        descrizione:
+          maxLength: 255
+          minLength: 0
+          type: string
+        modello:
+          maxLength: 100
+          minLength: 0
+          type: string
+        marca:
+          maxLength: 100
+          minLength: 0
+          type: string
+        stato:
+          maxLength: 50
+          minLength: 0
+          type: string
+    AttrezzaturaResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        matricola:
+          type: string
+        descrizione:
+          type: string
+        modello:
+          type: string
+        marca:
+          type: string
+        stato:
+          type: string
+        aggiornatoIl:
+          type: string
+          format: date-time
+    RicambioRequest:
+      required:
+        - articoloId
+        - interventoId
+        - quantitaUtilizzata
+      type: object
+      properties:
+        interventoId:
+          type: integer
+          format: int64
+        articoloId:
+          type: integer
+          format: int64
+        codiceRicambio:
+          maxLength: 50
+          minLength: 0
+          type: string
+        descrizioneRicambio:
+          maxLength: 255
+          minLength: 0
+          type: string
+        quantitaUtilizzata:
+          minimum: 1
+          type: integer
+          format: int32
+        prezzoUnitario:
+          type: number
+          format: double
+    SyncInterventoRequest:
+      required:
+        - intervento
+      type: object
+      properties:
+        intervento:
+          $ref: '#/components/schemas/InterventoRequest'
+        ricambi:
+          type: array
+          items:
+            $ref: '#/components/schemas/RicambioRequest'
+    RicambioResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        interventoId:
+          type: integer
+          format: int64
+        articoloId:
+          type: integer
+          format: int64
+        codiceRicambio:
+          type: string
+        descrizioneRicambio:
+          type: string
+        quantitaUtilizzata:
+          type: integer
+          format: int32
+        prezzoUnitario:
+          type: number
+          format: double
+    SyncInterventoResponse:
+      type: object
+      properties:
+        intervento:
+          $ref: '#/components/schemas/InterventoResponse'
+        ricambi:
+          type: array
+          items:
+            $ref: '#/components/schemas/RicambioResponse'

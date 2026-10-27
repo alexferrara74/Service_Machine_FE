@@ -1,0 +1,74 @@
+<div class="page">
+  <div class="page-header">
+    <h1>🔧 Attrezzature</h1>
+    <button class="btn btn-primary" (click)="create()">+ Nuovo</button>
+  </div>
+
+  <div class="card">
+    <form class="search-bar" (ngSubmit)="filterFromApi()">
+      <select [(ngModel)]="apiFilter" name="apiFilter" class="search-input">
+        <option value="stato">Filtra per stato</option>
+        <option value="marca">Filtra per marca</option>
+        <option value="matricola">Cerca per matricola</option>
+      </select>
+      <input
+        type="text"
+        [placeholder]="apiFilter === 'stato' ? 'Stato' : apiFilter === 'marca' ? 'Marca' : 'Matricola'"
+        [(ngModel)]="apiFilterValue"
+        name="apiFilterValue"
+        class="search-input" />
+      <button type="submit" class="btn btn-secondary">Cerca via API</button>
+      <button type="button" class="btn btn-secondary" (click)="load()">Tutte</button>
+    </form>
+    <div class="search-bar">
+      <input
+        type="text"
+        placeholder="Cerca per marca, matricola, stato..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilter()"
+        class="search-input" />
+    </div>
+
+    <div *ngIf="loading" class="loading">⏳ Caricamento...</div>
+    <div *ngIf="error" class="error-block">⚠️ {{ error }}</div>
+
+    <div *ngIf="!loading && !error">
+      <div *ngIf="filtered.length === 0" class="empty-state">
+        Nessuna attrezzatura trovata.
+      </div>
+      <table *ngIf="filtered.length > 0" class="data-table">
+        <thead>
+          <tr>
+            <th>Matricola</th>
+            <th>Descrizione</th>
+            <th>Marca</th>
+            <th>Modello</th>
+            <th>Stato</th>
+            <th>Azioni</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of paginatedItems">
+            <td>{{ item.matricola }}</td>
+            <td>{{ item.descrizione }}</td>
+            <td>{{ item.marca }}</td>
+            <td>{{ item.modello }}</td>
+            <td><span class="badge" [class]="'badge-' + (item.stato ?? '')">{{ item.stato }}</span></td>
+            <td class="actions">
+              <button class="btn btn-sm btn-secondary" (click)="edit(item)">✏️ Modifica</button>
+              <button class="btn btn-sm btn-danger" (click)="deleteItem(item)">🗑️ Elimina</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <app-pagination
+        [totalItems]="filtered.length"
+        [page]="currentPage"
+        [pageSize]="pageSize"
+        label="attrezzature"
+        (pageChange)="goToPage($event)"
+        (pageSizeChange)="changePageSize($event)">
+      </app-pagination>
+    </div>
+  </div>
+</div>
