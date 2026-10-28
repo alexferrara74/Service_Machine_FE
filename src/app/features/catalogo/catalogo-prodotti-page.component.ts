@@ -33,6 +33,7 @@ import { ProdottoCatalogo } from './prodotto-catalogo';
               <option value="all">Tutti</option>
               <option value="products">Solo prodotti</option>
               <option value="equipment">Solo attrezzature</option>
+              <option value="accessories">Solo accessori</option>
             </select>
           </label>
           <label>
@@ -62,7 +63,7 @@ import { ProdottoCatalogo } from './prodotto-catalogo';
               <td>{{ product.descrizione }}</td>
               <td>{{ product.categoriaDescrizione || product.categoriaId || '—' }}</td>
               <td>{{ product.classeCodice || '—' }}<span *ngIf="product.sottoclasseCodice"> / {{ product.sottoclasseCodice }}</span></td>
-              <td>{{ product.isAttrezzatura ? 'Attrezzatura' : 'Prodotto' }}</td>
+              <td>{{ typeLabel(product) }}</td>
             </tr>
           </tbody>
         </table>
@@ -98,7 +99,7 @@ export class CatalogoProdottiPageComponent implements OnInit {
   loading = false;
   error = '';
   search = '';
-  equipmentFilter: 'all' | 'products' | 'equipment' = 'all';
+  equipmentFilter: 'all' | 'products' | 'equipment' | 'accessories' = 'products';
   categoryFilter: number | null = null;
   currentPage = 1;
   pageSize = 25;
@@ -145,10 +146,20 @@ export class CatalogoProdottiPageComponent implements OnInit {
         product.sottoclasseCodice
       ].some(value => value?.toLocaleLowerCase().includes(search));
       const matchesType = this.equipmentFilter === 'all' ||
-        product.isAttrezzatura === (this.equipmentFilter === 'equipment');
+        this.typeKey(product) === this.equipmentFilter;
       const matchesCategory = this.categoryFilter === null || product.categoriaId === this.categoryFilter;
       return matchesSearch && matchesType && matchesCategory;
     });
+  }
+
+  typeKey(product: ProdottoCatalogo): 'products' | 'equipment' | 'accessories' {
+    if (product.isAttrezzatura) return 'equipment';
+    return product.isAccessorio ? 'accessories' : 'products';
+  }
+
+  typeLabel(product: ProdottoCatalogo): string {
+    const labels = { products: 'Prodotto', equipment: 'Attrezzatura', accessories: 'Accessorio' };
+    return labels[this.typeKey(product)];
   }
 
   get paginatedItems(): ProdottoCatalogo[] {

@@ -7,6 +7,8 @@ import { InterventoRequest } from '../../api/models/intervento-request';
 import { InterventoResponse } from '../../api/models/intervento-response';
 import { RicambioRequest } from '../../api/models/ricambio-request';
 import { RicambioResponse } from '../../api/models/ricambio-response';
+import { AttrezzatureService } from '../../api/services/attrezzature.service';
+import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
 import { PaginationComponent } from '../../shared/pagination.component';
 
 @Component({
@@ -30,7 +32,7 @@ import { PaginationComponent } from '../../shared/pagination.component';
             <label>Titolo<input class="form-control" [(ngModel)]="form.titolo" name="titolo" required></label>
             <label>Data apertura<input class="form-control" type="date" [(ngModel)]="form.dataApertura" name="dataApertura" required></label>
             <label>Data chiusura<input class="form-control" type="date" [(ngModel)]="form.dataChiusura" name="dataChiusura"></label>
-            <label>Matricola attrezzatura<input class="form-control" [(ngModel)]="form.matricolaAttrezzatura" name="matricola"></label>
+            <label>Matricola attrezzatura<input class="form-control" list="matricole" [(ngModel)]="form.matricolaAttrezzatura" name="matricola" required><datalist id="matricole"><option *ngFor="let a of attrezzature" [value]="a.matricola ?? ''">{{ a.descrizione }}</option></datalist></label>
             <label>Stato<input class="form-control" [(ngModel)]="form.stato" name="stato" required></label>
             <label>Costo manodopera<input class="form-control" type="number" step="0.01" [(ngModel)]="form.costoManodopera" name="costo"></label>
             <label>Problema<textarea class="form-control" [(ngModel)]="form.descrizioneProblema" name="problema"></textarea></label>
@@ -106,6 +108,7 @@ import { PaginationComponent } from '../../shared/pagination.component';
 export class InterventiPageComponent implements OnInit {
   items: InterventoResponse[] = [];
   ricambi: RicambioResponse[] = [];
+  attrezzature: AttrezzaturaResponse[] = [];
   loading = false;
   saving = false;
   editing = false;
@@ -121,9 +124,10 @@ export class InterventiPageComponent implements OnInit {
   form: InterventoRequest = this.emptyForm();
   ricambioForm: RicambioRequest = { articoloId: 0, interventoId: 0, quantitaUtilizzata: 1 };
 
-  constructor(private service: InterventiService, private route: ActivatedRoute, private router: Router) {}
+  constructor(private service: InterventiService, private attrezzatureService: AttrezzatureService, private route: ActivatedRoute, private router: Router) {}
 
   async ngOnInit(): Promise<void> {
+    this.attrezzatureService.getAll6().then(a => this.attrezzature = a).catch(() => {});
     const idParam = this.route.snapshot.paramMap.get('id');
     if (this.route.snapshot.routeConfig?.path === 'new') {
       this.isNew = true;
@@ -204,8 +208,9 @@ export class InterventiPageComponent implements OnInit {
     this.saving = true;
     this.error = '';
     try {
-      if (this.isNew) await this.service.create4({ body: this.form });
-      else if (this.id !== null) await this.service.update4({ id: this.id, body: this.form });
+      const body = this.toRequest();
+      if (this.isNew) await this.service.create4({ body });
+      else if (this.id !== null) await this.service.update4({ id: this.id, body });
       this.back();
     } catch (error) { this.error = this.message(error, 'Errore nel salvataggio'); }
     finally { this.saving = false; }
@@ -244,10 +249,20 @@ export class InterventiPageComponent implements OnInit {
     return { clienteId: 0, dataApertura: new Date().toISOString().slice(0, 10), stato: '', titolo: '' };
   }
 
+  // Gli input date producono yyyy-MM-dd, il BE vuole un LocalDateTime.
+  private toRequest(): InterventoRequest {
+    const { dataApertura, dataChiusura } = this.form;
+    return {
+      ...this.form,
+      dataApertura: `${dataApertura}T00:00:00`,
+      dataChiusura: dataChiusura ? `${dataChiusura}T00:00:00` : undefined
+    };
+  }
+
   private fromResponse(data: InterventoResponse): InterventoRequest {
     return {
-      clienteId: data.clienteId ?? 0, titolo: data.titolo ?? '', dataApertura: data.dataApertura ?? '',
-      dataChiusura: data.dataChiusura, matricolaAttrezzatura: data.matricolaAttrezzatura, stato: data.stato ?? '',
+      clienteId: data.clienteId ?? 0, titolo: data.titolo ?? '', dataApertura: data.dataApertura?.slice(0, 10) ?? '',
+      dataChiusura: data.dataChiusura?.slice(0, 10), matricolaAttrezzatura: data.matricolaAttrezzatura, stato: data.stato ?? '',
       costoManodopera: data.costoManodopera, descrizioneProblema: data.descrizioneProblema,
       soluzioneApplicata: data.soluzioneApplicata
     };

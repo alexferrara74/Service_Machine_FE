@@ -10,8 +10,6 @@ export interface NoleggioManutenzioneResponse {
   ordinariePerStraordinaria?: number | null;
   categoriaIds: number[];
   quantitaAcquistataTotale: number;
-  quantitaDopoUltimaManutenzione: number;
-  quantitaResidua?: number | null;
   manutenzioniOrdinarieDallUltimaStraordinaria: number;
   manutenzioneDovuta: boolean;
   tipoManutenzioneDovuta?: string | null;

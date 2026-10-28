@@ -4,7 +4,7 @@ info:
   description: API REST del gestionale
   version: 1.0.0
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8082
     description: Generated server url
 tags:
   - name: Storia Noleggi
@@ -1495,6 +1495,12 @@ components:
         quantita:
           type: number
           format: double
+        codiceArticolo:
+          type: string
+        descrizione:
+          type: string
+        origine:
+          type: string
         aggiornatoIl:
           type: string
           format: date-time
@@ -1586,13 +1592,6 @@ components:
         quantitaAcquistataTotale:
           type: number
           format: double
-        quantitaDopoUltimaManutenzione:
-          type: number
-          format: double
-        quantitaResidua:
-          type: number
-          format: double
-          nullable: true
         manutenzioniOrdinarieDallUltimaStraordinaria:
           type: integer
           format: int32

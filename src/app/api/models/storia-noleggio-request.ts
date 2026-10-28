@@ -5,7 +5,6 @@ export interface StoriaNoleggioRequest {
   articoloId?: number;
   clienteId?: number;
   dataDoc?: string;
-  docId: number;
   matricola?: string;
   quantita?: number;
   sezionale?: string;

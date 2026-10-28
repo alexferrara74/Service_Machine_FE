@@ -7,8 +7,8 @@ import { StoriaNoleggiService } from '../../api/services/storia-noleggi.service'
 import { StoriaNoleggiPaginatiService } from '../../api/services/storia-noleggi-paginati.service';
 import { PageResponse } from '../../api/models/page-response';
 import { StoriaNoleggioResponse } from '../../api/models/storia-noleggio-response';
-import { StoriaProdottiService } from '../../api/services/storia-prodotti.service';
-import { StoriaProdottoResponse } from '../../api/models/storia-prodotto-response';
+import { CatalogoProdottiService } from '../catalogo/catalogo-prodotti.service';
+import { ProdottoCatalogo } from '../catalogo/prodotto-catalogo';
 import { StoriaNoleggiManutenzioniService } from '../../api/services/storia-noleggi-manutenzioni.service';
 import { NoleggioManutenzioneResponse } from '../../api/models/noleggio-manutenzione-response';
 import { NoleggioManutenzioneEventoResponse } from '../../api/models/noleggio-manutenzione-evento-response';
@@ -72,7 +72,7 @@ interface RentalMaintenanceRow {
           <tr *ngFor="let item of items">
             <td>{{ item.docId }}</td>
             <td>{{ item.clienteId }}</td>
-            <td>{{ articleInfo(item.articoloId) }}</td>
+            <td>{{ articleInfo(item) }}</td>
             <td>{{ item.matricola }}</td>
             <td>{{ item.quantita }}</td>
             <td>{{ item.dataDoc }}</td>
@@ -188,7 +188,7 @@ interface RentalMaintenanceRow {
 </div>`,
   styles: [`
 .page{--ink:#172b4d;--muted:#66758b;--line:#e5ebf3;--blue:#2563eb;--blue-dark:#1d4ed8;--surface:#fff;padding:0;color:var(--ink);animation:page-in .35s ease-out}
-.page-header{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px}
+.page-header{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px}.maintenance-header{margin-bottom:12px}
 .page-title{display:flex;align-items:center;gap:14px}.page-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#dbeafe,#eff6ff);font-size:23px;box-shadow:inset 0 0 0 1px #bfdbfe}
 .page-header h1{font-size:25px;letter-spacing:-.45px;font-weight:750;color:var(--ink)}.page-header p{margin-top:5px;color:var(--muted);font-size:13px}
 .card{background:var(--surface);border:1px solid #edf1f7;border-radius:16px;box-shadow:0 8px 24px #172b4d0a;padding:24px;animation:panel-in .3s ease-out}
@@ -198,7 +198,7 @@ interface RentalMaintenanceRow {
 .table-wrap{width:100%;overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:14px}
 .data-table{width:100%;border-collapse:separate;border-spacing:0;min-width:850px}.data-table th{position:sticky;top:0;background:#f5f8fc;text-align:left;padding:12px 14px;font-size:11px;letter-spacing:.045em;text-transform:uppercase;font-weight:700;color:#66758b;border-bottom:1px solid #e2e8f0;white-space:nowrap}
 .data-table td{padding:13px 14px;border-bottom:1px solid #edf1f6;color:#334155;vertical-align:middle;font-size:13px}.data-table tbody tr:last-child td{border-bottom:0}.data-table tbody tr{transition:background .15s}.data-table tbody tr:nth-child(even){background:#fbfcfe}.data-table tbody tr:hover{background:#f1f7ff}
-.actions{display:flex;align-items:center;gap:8px}.empty-state{text-align:center;padding:48px 20px;color:#8190a5;background:linear-gradient(180deg,#fbfdff,#fff);border:1px dashed #dce5f0;border-radius:12px}
+td.actions{white-space:nowrap}td.actions .btn+.btn{margin-left:8px}.empty-state{text-align:center;padding:48px 20px;color:#8190a5;background:linear-gradient(180deg,#fbfdff,#fff);border:1px dashed #dce5f0;border-radius:12px}
 .loading{text-align:center;padding:40px;color:var(--muted)}
 .error-block{background:#fff1f0;color:#b42318;border:1px solid #ffd5d2;padding:12px 16px;border-radius:10px;margin:12px 0}
 .article-warning{background:#fff8eb;color:#9a5b00;border:1px solid #fde2ad;padding:10px 14px;border-radius:9px;margin-top:12px}
@@ -224,7 +224,7 @@ export class StoriaNoleggioListComponent implements OnInit {
   loading = false;
   error = '';
   articleError = '';
-  articleHistory: StoriaProdottoResponse[] = [];
+  catalogo = new Map<number, ProdottoCatalogo>();
   apiFilter: 'matricola' | 'cliente' | 'articolo' = 'matricola';
   apiFilterValue = '';
   private activeApiFilter: 'matricola' | 'cliente' | 'articolo' = 'matricola';
@@ -237,13 +237,13 @@ export class StoriaNoleggioListComponent implements OnInit {
   constructor(
     private service: StoriaNoleggiService,
     private paginatedService: StoriaNoleggiPaginatiService,
-    private productsService: StoriaProdottiService,
+    private catalogoService: CatalogoProdottiService,
     private maintenanceService: StoriaNoleggiManutenzioniService,
     private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([this.load(), this.loadArticleHistory()]);
+    await Promise.all([this.load(), this.loadCatalogo()]);
   }
 
   async loadMaintenanceRows(): Promise<void> {
@@ -326,23 +326,21 @@ export class StoriaNoleggioListComponent implements OnInit {
     }
   }
 
-  async loadArticleHistory(): Promise<void> {
+  async loadCatalogo(): Promise<void> {
     this.articleError = '';
     try {
-      this.articleHistory = await this.productsService.getAll();
+      this.catalogo = new Map((await this.catalogoService.getAll()).map(p => [p.articoloId, p]));
     } catch (e: any) {
       this.articleError = e?.message ?? 'Impossibile recuperare i dettagli del prodotto';
     }
   }
 
-  articleInfo(articleId?: number): string {
+  articleInfo(item: StoriaNoleggioResponse): string {
+    const articleId = item.articoloId;
     if (articleId === undefined) return '—';
-    const history = this.articleHistory
-      .filter(item => item.articoloId === articleId)
-      .sort((a, b) => (b.aggiornatoIl ?? b.dataDoc ?? '').localeCompare(a.aggiornatoIl ?? a.dataDoc ?? ''));
-    const article = history.find(item => item.codiceArticolo || item.descrizione);
-    if (!article) return `Prodotto non trovato (ID ${articleId})`;
-    const label = [article.codiceArticolo, article.descrizione].filter(Boolean).join(' — ');
+    const article = this.catalogo.get(articleId);
+    const label = article ? [article.codice, article.descrizione].filter(Boolean).join(' — ') : '';
+    if (!label) return `Prodotto non trovato (ID ${articleId})`;
     return `${label} (ID ${articleId})`;
   }
 

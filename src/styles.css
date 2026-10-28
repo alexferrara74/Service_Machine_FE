@@ -1,1 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Spaziatura uniforme dei gruppi di pulsanti; gli stili dei componenti hanno la precedenza. */
+.form-actions, .header-actions, .document-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.form-actions { margin-top: 24px; }

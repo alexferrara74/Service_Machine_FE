@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AttrezzatureService } from '../../api/services/attrezzature.service';
@@ -10,7 +9,7 @@ import { PaginationComponent } from '../../shared/pagination.component';
 @Component({
   selector: 'app-attrezzature-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent],
   templateUrl: './attrezzature-list.component.html',
   styleUrl: './attrezzature-list.component.css'
 })

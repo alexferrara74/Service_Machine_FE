@@ -5,6 +5,9 @@ export interface StoriaNoleggioResponse {
   aggiornatoIl?: string;
   articoloId?: number;
   clienteId?: number;
+  codiceArticolo?: string;
+  descrizione?: string;
+  origine?: string;
   dataDoc?: string;
   docId?: number;
   matricola?: string;

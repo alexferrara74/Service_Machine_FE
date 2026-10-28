@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AttrezzatureService } from '../../api/services/attrezzature.service';
 import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
 import { AttrezzaturaRequest } from '../../api/models/attrezzatura-request';
@@ -9,7 +9,7 @@ import { AttrezzaturaRequest } from '../../api/models/attrezzatura-request';
 @Component({
   selector: 'app-attrezzature-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './attrezzature-detail.component.html',
   styleUrl: './attrezzature-detail.component.css'
 })

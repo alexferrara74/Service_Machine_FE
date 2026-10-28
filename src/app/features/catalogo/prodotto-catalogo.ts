@@ -7,5 +7,6 @@ export interface ProdottoCatalogo {
   classeCodice?: string;
   sottoclasseCodice?: string;
   isAttrezzatura: boolean;
+  isAccessorio?: boolean;
   aggiornatoIl?: string;
 }

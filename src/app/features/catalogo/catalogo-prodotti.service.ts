@@ -10,4 +10,10 @@ export class CatalogoProdottiService {
   getAll(): Promise<ProdottoCatalogo[]> {
     return firstValueFrom(this.http.get<ProdottoCatalogo[]>('/api/prodotti/catalogo'));
   }
+
+  getAttrezzature(): Promise<ProdottoCatalogo[]> {
+    return firstValueFrom(this.http.get<ProdottoCatalogo[]>('/api/prodotti/catalogo', {
+      params: { attrezzatura: true }
+    }));
+  }
 }

@@ -1,19 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { StoriaNoleggiService } from '../../api/services/storia-noleggi.service';
 import { StoriaNoleggioResponse } from '../../api/models/storia-noleggio-response';
 import { StoriaNoleggioRequest } from '../../api/models/storia-noleggio-request';
-import { StoriaProdottiService } from '../../api/services/storia-prodotti.service';
-import { StoriaProdottoResponse } from '../../api/models/storia-prodotto-response';
+import { ClientiService } from '../../api/services/clienti.service';
+import { ClienteResponse } from '../../api/models/cliente-response';
+import { AttrezzatureService } from '../../api/services/attrezzature.service';
+import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
+import { CatalogoProdottiService } from '../catalogo/catalogo-prodotti.service';
+import { ProdottoCatalogo } from '../catalogo/prodotto-catalogo';
 import { NoleggioDocumentoService } from './noleggio-documento.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-storia-noleggi-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   template: `
 <div class="page">
   <div class="page-header">
@@ -28,46 +32,45 @@ import { HttpErrorResponse } from '@angular/common/http';
     <div *ngIf="error" class="error-block">⚠️ {{ error }}</div>
     <form *ngIf="!loading" (ngSubmit)="save()">
       <div class="form-grid">
-        <div class="form-group">
+        <div class="form-group" *ngIf="!isNew">
           <label>Doc ID</label>
-          <input type="number" [(ngModel)]="form.docId" name="docId" class="form-control" placeholder="Doc ID" [readonly]="!isNew" />
+          <input type="number" [ngModel]="id" name="docId" class="form-control" readonly />
         </div>
         <div class="form-group">
-          <label>Cliente ID</label>
-          <input type="number" [(ngModel)]="form.clienteId" name="clienteId" class="form-control" placeholder="Cliente ID" />
+          <label>Cliente *</label>
+          <select [(ngModel)]="form.clienteId" name="clienteId" class="form-control" required>
+            <option [ngValue]="undefined">Seleziona un cliente</option>
+            <option *ngFor="let c of clienti" [ngValue]="c.id">{{ clienteLabel(c) }}</option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Prodotto</label>
-          <select *ngIf="availableArticles.length" [(ngModel)]="form.articoloId" name="articoloId" class="form-control">
+          <label>Prodotto (attrezzatura) *</label>
+          <select [ngModel]="form.articoloId" (ngModelChange)="onArticleChange($event)" name="articoloId" class="form-control" required>
             <option [ngValue]="undefined">Seleziona un articolo</option>
-            <option *ngFor="let article of availableArticles" [ngValue]="article.articoloId">
+            <option *ngFor="let article of articles" [ngValue]="article.articoloId">
               {{ articleLabel(article) }}
             </option>
           </select>
-          <input *ngIf="!availableArticles.length" type="number" [(ngModel)]="form.articoloId" name="articoloId" class="form-control" placeholder="Articolo ID" />
         </div>
         <div class="form-group">
-          <label>Matricola</label>
-          <input type="text" [(ngModel)]="form.matricola" name="matricola" class="form-control" placeholder="Matricola" />
+          <label>Matricola *</label>
+          <input list="matricole" [(ngModel)]="form.matricola" name="matricola" class="form-control" placeholder="Matricola (automatica o manuale)" autocomplete="off" required />
+          <datalist id="matricole">
+            <option *ngFor="let a of matricoleArticolo" [value]="a.matricola">{{ a.descrizione }}</option>
+          </datalist>
         </div>
         <div class="form-group">
           <label>Quantità</label>
-          <input type="number" [(ngModel)]="form.quantita" name="quantita" class="form-control" placeholder="Quantità" />
+          <input type="number" min="0" [(ngModel)]="form.quantita" name="quantita" class="form-control" placeholder="Quantità" />
         </div>
         <div class="form-group">
-          <label>Data Doc</label>
-          <input type="date" [(ngModel)]="form.dataDoc" name="dataDoc" class="form-control" />
+          <label>Data Doc *</label>
+          <input type="date" [(ngModel)]="form.dataDoc" name="dataDoc" class="form-control" required />
         </div>
         <div class="form-group">
           <label>Sezionale</label>
           <input type="text" [(ngModel)]="form.sezionale" name="sezionale" class="form-control" placeholder="Sezionale" />
         </div>
-      </div>
-      <div *ngIf="selectedArticle" class="article-info">
-        <strong>Articolo selezionato:</strong> {{ articleLabel(selectedArticle) }}
-      </div>
-      <div *ngIf="form.articoloId !== undefined && !selectedArticle" class="article-warning">
-        Nessun dettaglio disponibile per il prodotto {{ form.articoloId }}.
       </div>
       <div *ngIf="articleError" class="article-warning">⚠️ {{ articleError }}</div>
       <div class="form-actions">
@@ -76,8 +79,9 @@ import { HttpErrorResponse } from '@angular/common/http';
         </button>
       </div>
     </form>
-    <section *ngIf="!isNew && id !== null" class="document-section">
+    <section class="document-section">
       <h2>Documento di noleggio</h2>
+      <p *ngIf="isNew" class="document-hint">Il PDF selezionato verrà allegato al salvataggio del noleggio.</p>
       <p *ngIf="documentName">Documento attuale: <strong>{{ documentName }}</strong></p>
       <p *ngIf="!documentName && !documentLoading">Nessun documento caricato.</p>
       <p *ngIf="documentLoading">Verifica documento in corso...</p>
@@ -87,7 +91,7 @@ import { HttpErrorResponse } from '@angular/common/http';
       </label>
       <p *ngIf="documentFile" class="document-selection">{{ documentFile.name }}</p>
       <div class="document-actions">
-        <button type="button" class="btn btn-primary" [disabled]="!documentFile || documentUploading" (click)="uploadDocument(documentInput)">
+        <button *ngIf="!isNew" type="button" class="btn btn-primary" [disabled]="!documentFile || documentUploading" (click)="uploadDocument(documentInput)">
           {{ documentUploading ? 'Caricamento...' : documentName ? 'Sostituisci PDF' : 'Carica PDF' }}
         </button>
         <button *ngIf="documentName" type="button" class="btn btn-secondary" [disabled]="documentDownloading" (click)="downloadDocument()">
@@ -107,7 +111,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 .form-group{display:flex;flex-direction:column;gap:6px}
 .form-group label{font-weight:600;color:#475569;font-size:13px}
 .form-control{padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;width:100%}
-.form-actions{margin-top:24px;display:flex;gap:10px}
+.form-actions{margin-top:24px;display:flex;gap:12px;flex-wrap:wrap}.document-hint{color:#64748b;font-size:13px;margin:0 0 4px}
 .loading{text-align:center;padding:40px;color:#64748b}
 .error-block{background:#fee2e2;color:#b91c1c;padding:12px 16px;border-radius:8px;margin-bottom:12px}
 .article-info{margin-top:16px;padding:12px;background:#eff6ff;border-radius:8px;color:#1e3a8a}
@@ -136,10 +140,30 @@ export class StoriaNoleggioDetailComponent implements OnInit {
   documentDownloading = false;
   documentFile: File | null = null;
   id: number | null = null;
-  articleHistory: StoriaProdottoResponse[] = [];
+  articles: ProdottoCatalogo[] = [];
+  clienti: ClienteResponse[] = [];
+  attrezzature: AttrezzaturaResponse[] = [];
+
+  get matricole(): AttrezzaturaResponse[] {
+    return this.attrezzature.filter(a => a.matricola);
+  }
+
+  // shortcut: l'API attrezzature non espone articoloId, si abbina per descrizione; da sostituire con articoloId se esposto.
+  get matricoleArticolo(): AttrezzaturaResponse[] {
+    const article = this.articles.find(a => a.articoloId === this.form.articoloId);
+    if (!article) return this.matricole;
+    const description = article.descrizione?.trim().toLowerCase();
+    return this.matricole.filter(a => a.descrizione?.trim().toLowerCase() === description);
+  }
+
+  onArticleChange(articoloId: number | undefined): void {
+    this.form.articoloId = articoloId;
+    const matches = articoloId === undefined ? [] : this.matricoleArticolo;
+    // Una sola matricola nota: precompilata; altrimenti campo libero.
+    this.form.matricola = matches.length === 1 ? matches[0].matricola! : '';
+  }
 
   form: StoriaNoleggioRequest = {
-    docId: 0,
     clienteId: undefined,
     articoloId: undefined,
     matricola: '',
@@ -150,14 +174,16 @@ export class StoriaNoleggioDetailComponent implements OnInit {
 
   constructor(
     private service: StoriaNoleggiService,
-    private productsService: StoriaProdottiService,
+    private clientiService: ClientiService,
+    private attrezzatureService: AttrezzatureService,
+    private catalogoService: CatalogoProdottiService,
     private documentService: NoleggioDocumentoService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
-    await this.loadArticleHistory();
+    await this.loadLookups();
     const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam || idParam === 'new') {
       this.isNew = true;
@@ -168,7 +194,6 @@ export class StoriaNoleggioDetailComponent implements OnInit {
     try {
       const data: StoriaNoleggioResponse = await this.service.getById1({ docId: this.id });
       this.form = {
-        docId: data.docId ?? 0,
         clienteId: data.clienteId,
         articoloId: data.articoloId,
         matricola: data.matricola ?? '',
@@ -176,7 +201,6 @@ export class StoriaNoleggioDetailComponent implements OnInit {
         dataDoc: data.dataDoc ?? '',
         sezionale: data.sezionale ?? ''
       };
-      await this.loadArticleForRental(data.articoloId);
       await this.loadDocumentMetadata();
     } catch (e: any) {
       this.error = e?.message ?? 'Errore nel caricamento';
@@ -185,48 +209,39 @@ export class StoriaNoleggioDetailComponent implements OnInit {
     }
   }
 
-  get availableArticles(): StoriaProdottoResponse[] {
-    const byArticleId = new Map<number, StoriaProdottoResponse>();
-    for (const article of this.articleHistory) {
-      if (article.articoloId === undefined) continue;
-      const existing = byArticleId.get(article.articoloId);
-      if (!existing || (article.aggiornatoIl ?? article.dataDoc ?? '') >
-          (existing.aggiornatoIl ?? existing.dataDoc ?? '')) {
-        byArticleId.set(article.articoloId, article);
-      }
-    }
-    return [...byArticleId.values()].sort((a, b) => this.articleLabel(a).localeCompare(this.articleLabel(b)));
+  clienteLabel(c: ClienteResponse): string {
+    return [c.codice, c.ragioneSociale ?? [c.nome, c.cognome].filter(Boolean).join(' ')].filter(Boolean).join(' — ') || `Cliente ${c.id}`;
   }
 
-  get selectedArticle(): StoriaProdottoResponse | undefined {
-    return this.articleHistory.find(article => article.articoloId === this.form.articoloId);
+  articleLabel(article: ProdottoCatalogo): string {
+    return [article.codice, article.descrizione].filter(Boolean).join(' — ') || `Articolo ID ${article.articoloId}`;
   }
 
-  articleLabel(article: StoriaProdottoResponse): string {
-    const details = [
-      article.codiceArticolo,
-      article.descrizione ?? article.categoriaDescrizione
-    ].filter(Boolean).join(' — ');
-    return details || `Articolo ID ${article.articoloId ?? 'non disponibile'}`;
-  }
-
-  private async loadArticleHistory(): Promise<void> {
+  private async loadLookups(): Promise<void> {
     this.articleError = '';
     try {
-      this.articleHistory = await this.productsService.getAll();
+      [this.clienti, this.articles, this.attrezzature] = await Promise.all([
+        this.clientiService.getAll5(),
+        this.catalogoService.getAttrezzature(),
+        this.attrezzatureService.getAll6()
+      ]);
     } catch (e: any) {
-      this.articleError = e?.message ?? 'Impossibile recuperare i prodotti';
+      this.articleError = e?.message ?? 'Impossibile recuperare clienti, catalogo o attrezzature';
     }
   }
 
-  private async loadArticleForRental(articleId?: number): Promise<void> {
-    if (articleId === undefined || this.articleHistory.some(article => article.articoloId === articleId)) return;
-    try {
-      const history = await this.productsService.getByArticolo({ articoloId: articleId });
-      this.articleHistory = [...this.articleHistory, ...history];
-    } catch (e: any) {
-      this.articleError = e?.message ?? 'Impossibile recuperare i dettagli dell’articolo';
+  private validate(): string {
+    if (!this.form.clienteId) return 'Il cliente è obbligatorio.';
+    if (!this.form.articoloId) return "L'articolo è obbligatorio.";
+    if (!this.form.dataDoc) return 'La data del noleggio è obbligatoria.';
+    if (!this.form.matricola?.trim()) return 'La matricola è obbligatoria.';
+    if (!this.matricole.some(a => a.matricola === this.form.matricola?.trim())) {
+      return 'Matricola non trovata: selezionane una dall\'elenco.';
     }
+    if (this.form.quantita !== undefined && this.form.quantita !== null && this.form.quantita < 0) {
+      return 'La quantità non può essere negativa.';
+    }
+    return '';
   }
 
   selectDocument(event: Event): void {
@@ -310,15 +325,26 @@ export class StoriaNoleggioDetailComponent implements OnInit {
   }
 
   async save(): Promise<void> {
+    this.error = this.validate();
+    if (this.error) return;
     this.saving = true;
-    this.error = '';
     try {
       if (this.isNew) {
         const saved = await this.service.create1({ body: this.form });
-        this.id = saved.docId ?? this.form.docId;
+        this.id = saved.docId ?? null;
         this.isNew = false;
+        const pending = this.documentFile;
+        if (pending && this.id !== null) {
+          try {
+            this.documentName = (await this.documentService.upload(this.id, pending)).nomeFile;
+            this.documentFile = null;
+          } catch (error) {
+            // Il noleggio è già salvato: resta in pagina per ritentare l'upload.
+            this.documentError = this.message(error, 'Noleggio salvato, ma caricamento del PDF non riuscito.');
+          }
+        }
         await this.router.navigate(['/noleggi', this.id]);
-        await this.loadDocumentMetadata();
+        if (!pending) await this.loadDocumentMetadata();
         return;
       }
       await this.service.update1({ docId: this.id!, body: this.form });
