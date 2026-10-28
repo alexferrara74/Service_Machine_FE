@@ -17,6 +17,7 @@ export class AppComponent {
     { path: '/clienti', label: '👥 Clienti' },
     { path: '/noleggi', label: '📋 Noleggi' },
     { path: '/prodotti', label: '📦 Prodotti' },
+    { path: '/catalogo-prodotti', label: '🗂️ Catalogo ERP' },
     { path: '/interventi', label: '🛠️ Interventi' },
     { path: '/magazzino', label: '🏭 Magazzino' },
     { path: '/magazzino-posizioni', label: '📍 Posizioni Magazzino' },

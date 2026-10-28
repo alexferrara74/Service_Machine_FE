@@ -61,11 +61,11 @@ import { PaginationComponent } from '../../shared/pagination.component';
         <table *ngIf="!loading && items.length" class="data-table">
           <thead><tr><th>ID</th><th>Codice</th><th>Descrizione</th><th>Cliente</th><th>Articolo</th><th>Categoria</th><th>Quantità</th><th>Data</th><th></th></tr></thead>
           <tbody><tr *ngFor="let item of paginatedItems">
-            <td>{{ item.id }}</td><td>{{ item.codiceArticolo }}</td><td>{{ item.descrizione }}</td>
+            <td>{{ item.id }}</td><td>{{ item.codiceArticolo || (item.articoloId == null ? 'Voce descrittiva' : '') }}</td><td>{{ item.descrizione }}</td>
             <td>{{ customerName(item.clienteId) }}<small *ngIf="customerCode(item.clienteId)">Codice: {{ customerCode(item.clienteId) }}</small></td>
             <td>{{ item.articoloId }}</td>
             <td>{{ item.categoriaDescrizione ?? item.categoriaId }}</td><td>{{ item.quantita }}</td><td>{{ item.dataDoc }}</td>
-            <td><button class="btn btn-secondary" (click)="edit(item)">Modifica</button></td>
+            <td><button *ngIf="item.articoloId != null || item.codiceArticolo" class="btn btn-secondary" (click)="edit(item)">Modifica</button></td>
           </tr></tbody>
         </table>
         <app-pagination

@@ -7,6 +7,8 @@ import { StoriaNoleggioResponse } from '../../api/models/storia-noleggio-respons
 import { StoriaNoleggioRequest } from '../../api/models/storia-noleggio-request';
 import { StoriaProdottiService } from '../../api/services/storia-prodotti.service';
 import { StoriaProdottoResponse } from '../../api/models/storia-prodotto-response';
+import { NoleggioDocumentoService } from './noleggio-documento.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-storia-noleggi-detail',
@@ -74,6 +76,27 @@ import { StoriaProdottoResponse } from '../../api/models/storia-prodotto-respons
         </button>
       </div>
     </form>
+    <section *ngIf="!isNew && id !== null" class="document-section">
+      <h2>Documento di noleggio</h2>
+      <p *ngIf="documentName">Documento attuale: <strong>{{ documentName }}</strong></p>
+      <p *ngIf="!documentName && !documentLoading">Nessun documento caricato.</p>
+      <p *ngIf="documentLoading">Verifica documento in corso...</p>
+      <label class="document-picker">
+        Carica un PDF (massimo 20 MB)
+        <input #documentInput type="file" accept=".pdf,application/pdf" (change)="selectDocument($event)" />
+      </label>
+      <p *ngIf="documentFile" class="document-selection">{{ documentFile.name }}</p>
+      <div class="document-actions">
+        <button type="button" class="btn btn-primary" [disabled]="!documentFile || documentUploading" (click)="uploadDocument(documentInput)">
+          {{ documentUploading ? 'Caricamento...' : documentName ? 'Sostituisci PDF' : 'Carica PDF' }}
+        </button>
+        <button *ngIf="documentName" type="button" class="btn btn-secondary" [disabled]="documentDownloading" (click)="downloadDocument()">
+          {{ documentDownloading ? 'Download...' : 'Scarica PDF' }}
+        </button>
+      </div>
+      <p *ngIf="documentError" class="error-block">{{ documentError }}</p>
+      <p *ngIf="documentSuccess" class="success-block">{{ documentSuccess }}</p>
+    </section>
   </div>
 </div>`,
   styles: [`
@@ -89,6 +112,12 @@ import { StoriaProdottoResponse } from '../../api/models/storia-prodotto-respons
 .error-block{background:#fee2e2;color:#b91c1c;padding:12px 16px;border-radius:8px;margin-bottom:12px}
 .article-info{margin-top:16px;padding:12px;background:#eff6ff;border-radius:8px;color:#1e3a8a}
 .article-warning{margin-top:12px;padding:10px;background:#fff7ed;color:#9a3412;border-radius:8px}
+.document-section{margin-top:28px;padding-top:20px;border-top:1px solid #e2e8f0}
+.document-section h2{margin:0 0 12px;color:#1e2a3a;font-size:18px}
+.document-picker{display:grid;gap:8px;max-width:400px;margin:16px 0;font-weight:600;color:#475569}
+.document-actions{display:flex;gap:10px;flex-wrap:wrap}
+.document-selection{color:#475569}
+.success-block{padding:10px;background:#dcfce7;color:#166534;border-radius:8px}
 .btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:14px;font-weight:500}.btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-primary{background:#1a73e8;color:#fff}.btn-secondary{background:#e2e8f0;color:#334155}.btn-danger{background:#e53935;color:#fff}
 `]
@@ -99,6 +128,13 @@ export class StoriaNoleggioDetailComponent implements OnInit {
   saving = false;
   error = '';
   articleError = '';
+  documentName = '';
+  documentError = '';
+  documentSuccess = '';
+  documentLoading = false;
+  documentUploading = false;
+  documentDownloading = false;
+  documentFile: File | null = null;
   id: number | null = null;
   articleHistory: StoriaProdottoResponse[] = [];
 
@@ -115,6 +151,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
   constructor(
     private service: StoriaNoleggiService,
     private productsService: StoriaProdottiService,
+    private documentService: NoleggioDocumentoService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -140,6 +177,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
         sezionale: data.sezionale ?? ''
       };
       await this.loadArticleForRental(data.articoloId);
+      await this.loadDocumentMetadata();
     } catch (e: any) {
       this.error = e?.message ?? 'Errore nel caricamento';
     } finally {
@@ -191,15 +229,99 @@ export class StoriaNoleggioDetailComponent implements OnInit {
     }
   }
 
+  selectDocument(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.documentError = '';
+    this.documentSuccess = '';
+    if (!file) {
+      this.documentFile = null;
+      return;
+    }
+    if (!file.name.toLocaleLowerCase().endsWith('.pdf') || file.size === 0) {
+      this.documentError = 'Seleziona un documento PDF non vuoto.';
+      input.value = '';
+      this.documentFile = null;
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      this.documentError = 'Il documento supera la dimensione massima di 20 MB.';
+      input.value = '';
+      this.documentFile = null;
+      return;
+    }
+    this.documentFile = file;
+  }
+
+  async uploadDocument(input: HTMLInputElement): Promise<void> {
+    if (this.id === null || !this.documentFile) return;
+    this.documentUploading = true;
+    this.documentError = '';
+    this.documentSuccess = '';
+    try {
+      const result = await this.documentService.upload(this.id, this.documentFile);
+      this.documentName = result.nomeFile;
+      this.documentFile = null;
+      input.value = '';
+      this.documentSuccess = 'Documento caricato correttamente.';
+    } catch (error) {
+      this.documentError = this.message(error, 'Errore durante il caricamento del documento.');
+    } finally {
+      this.documentUploading = false;
+    }
+  }
+
+  async downloadDocument(): Promise<void> {
+    if (this.id === null) return;
+    this.documentDownloading = true;
+    this.documentError = '';
+    try {
+      const response = await this.documentService.download(this.id);
+      if (!response.body) throw new Error('Il server ha restituito un documento vuoto.');
+      const url = URL.createObjectURL(response.body);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = this.documentName || 'documento-noleggio.pdf';
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch (error) {
+      this.documentError = this.message(error, 'Errore durante il download del documento.');
+    } finally {
+      this.documentDownloading = false;
+    }
+  }
+
+  private async loadDocumentMetadata(): Promise<void> {
+    if (this.id === null) return;
+    this.documentLoading = true;
+    this.documentError = '';
+    try {
+      const metadata = await this.documentService.getMetadata(this.id);
+      this.documentName = metadata.nomeFile;
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 404) {
+        this.documentName = '';
+      } else {
+        this.documentError = this.message(error, 'Impossibile verificare il documento del noleggio.');
+      }
+    } finally {
+      this.documentLoading = false;
+    }
+  }
+
   async save(): Promise<void> {
     this.saving = true;
     this.error = '';
     try {
       if (this.isNew) {
-        await this.service.create1({ body: this.form });
-      } else {
-        await this.service.update1({ docId: this.id!, body: this.form });
+        const saved = await this.service.create1({ body: this.form });
+        this.id = saved.docId ?? this.form.docId;
+        this.isNew = false;
+        await this.router.navigate(['/noleggi', this.id]);
+        await this.loadDocumentMetadata();
+        return;
       }
+      await this.service.update1({ docId: this.id!, body: this.form });
       this.router.navigate(['/noleggi']);
     } catch (e: any) {
       this.error = e?.message ?? 'Errore nel salvataggio';
@@ -220,5 +342,9 @@ export class StoriaNoleggioDetailComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/noleggi']);
+  }
+
+  private message(error: unknown, fallback: string): string {
+    return error instanceof Error ? error.message : fallback;
   }
 }
