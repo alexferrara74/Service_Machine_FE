@@ -9,6 +9,7 @@ import { ClienteStatisticheService } from '../../api/services/cliente-statistich
 import { ClienteManutenzioneService } from '../../api/services/cliente-manutenzione.service';
 import { NoleggioManutenzionePianificazioneRequest } from '../../api/models/noleggio-manutenzione-pianificazione-request';
 import { ClienteStatisticheResponse } from '../../api/models/cliente-statistiche-response';
+import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-clienti-detail',
@@ -80,7 +81,7 @@ export class ClientiDetailComponent implements OnInit {
       };
       await this.loadCustomerInfo();
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nel caricamento';
+      this.error = errorMessage(e, 'Errore nel caricamento');
     } finally {
       this.loading = false;
     }
@@ -182,7 +183,7 @@ export class ClientiDetailComponent implements OnInit {
       }
       this.router.navigate(['/clienti']);
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nel salvataggio';
+      this.error = errorMessage(e, 'Errore nel salvataggio');
     } finally {
       this.saving = false;
     }
@@ -194,7 +195,7 @@ export class ClientiDetailComponent implements OnInit {
       await this.service.delete5({ id: this.id! });
       this.router.navigate(['/clienti']);
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nell\'eliminazione';
+      this.error = errorMessage(e, 'Errore nell\'eliminazione');
     }
   }
 

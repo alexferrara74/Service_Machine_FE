@@ -23,7 +23,15 @@ npm run build
 npm test
 ```
 
-`npm run build` esegue il build Angular di produzione. `npm test` avvia i test unitari Jasmine/Karma.
+`npm run build` esegue il build Angular di produzione. `npm test` avvia i test unitari Jasmine/Karma (in CI: `npx ng test --watch=false --browsers=ChromeHeadless`). Coprono il componente radice, la pagina di sincronizzazione e l'helper dei messaggi di errore.
+
+## Messaggi di errore
+
+Gli errori delle chiamate al backend vengono mostrati con il testo italiano restituito dal backend (campo `message`, es. «Il cliente non può essere eliminato perché ha noleggi…»). L'helper condiviso è `src/app/shared/error-message.ts` (`errorMessage(errore, testoDiRiserva)`): usarlo in ogni nuova schermata al posto di `e.message`, che per un errore HTTP contiene solo un testo tecnico.
+
+## Sincronizzazione ERP
+
+La pagina **Sincronizzazione** chiama `POST /api/sync/erp` e mostra le statistiche restituite: clienti, prodotti di catalogo, attrezzature, accessori, classi/sottoclassi, righe fattura e clienti con prodotti fatturati. I noleggi non provengono dall'ERP: si inseriscono dalla sezione Noleggi. Se il microservizio di integrazione non è raggiungibile il backend risponde `502` e la pagina mostra il messaggio.
 
 ## Manutenzioni stagionali
 

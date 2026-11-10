@@ -13,6 +13,7 @@ import { CatalogoProdottiService } from '../catalogo/catalogo-prodotti.service';
 import { ProdottoCatalogo } from '../catalogo/prodotto-catalogo';
 import { NoleggioDocumentoService } from './noleggio-documento.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-storia-noleggi-detail',
@@ -203,7 +204,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
       };
       await this.loadDocumentMetadata();
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nel caricamento';
+      this.error = errorMessage(e, 'Errore nel caricamento');
     } finally {
       this.loading = false;
     }
@@ -226,7 +227,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
         this.attrezzatureService.getAll6()
       ]);
     } catch (e: any) {
-      this.articleError = e?.message ?? 'Impossibile recuperare clienti, catalogo o attrezzature';
+      this.articleError = errorMessage(e, 'Impossibile recuperare clienti, catalogo o attrezzature');
     }
   }
 
@@ -350,7 +351,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
       await this.service.update1({ docId: this.id!, body: this.form });
       this.router.navigate(['/noleggi']);
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nel salvataggio';
+      this.error = errorMessage(e, 'Errore nel salvataggio');
     } finally {
       this.saving = false;
     }
@@ -362,7 +363,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
       await this.service.delete1({ docId: this.id! });
       this.router.navigate(['/noleggi']);
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nell\'eliminazione';
+      this.error = errorMessage(e, 'Errore nell\'eliminazione');
     }
   }
 

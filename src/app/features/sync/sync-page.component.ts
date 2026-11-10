@@ -8,7 +8,7 @@ interface SyncStatistics {
   prodottiCatalogo: number;
   attrezzature: number;
   accessori: number;
-  righeNoleggio: number;
+  classiSottoclassi: number;
   righeFattura: number;
   clientiConProdottiFatturati: number;
 }
@@ -26,7 +26,7 @@ interface SyncResponse {
   template: `
     <section class="sync-page">
       <h1>Sincronizzazione ERP</h1>
-      <p>Importa clienti, catalogo prodotti/attrezzature/accessori, prodotti fatturati associati ai clienti e canoni di noleggio fatturati.</p>
+      <p>Importa clienti, catalogo prodotti/attrezzature/accessori, classi e sottoclassi e prodotti fatturati associati ai clienti. I noleggi non provengono dall'ERP: si inseriscono dalla sezione Noleggi.</p>
       <button type="button" class="sync-button" [disabled]="loading" (click)="sync()">
         {{ loading ? 'Sincronizzazione in corso...' : 'Sincronizza dati ERP' }}
       </button>
@@ -37,7 +37,7 @@ interface SyncResponse {
         <li>Prodotti catalogo: {{ statistics.prodottiCatalogo }}</li>
         <li>Attrezzature: {{ statistics.attrezzature }}</li>
         <li>Accessori: {{ statistics.accessori }}</li>
-        <li>Righe noleggio: {{ statistics.righeNoleggio }}</li>
+        <li>Classi e sottoclassi: {{ statistics.classiSottoclassi }}</li>
         <li>Righe fattura associate: {{ statistics.righeFattura }}</li>
         <li>Clienti con prodotti fatturati: {{ statistics.clientiConProdottiFatturati }}</li>
       </ul>

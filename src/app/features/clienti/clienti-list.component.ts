@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ClientiService } from '../../api/services/clienti.service';
 import { ClienteResponse } from '../../api/models/cliente-response';
 import { PaginationComponent } from '../../shared/pagination.component';
+import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-clienti-list',
@@ -35,7 +36,7 @@ export class ClientiListComponent implements OnInit {
       this.items = await this.service.getAll5();
       this.applyFilter();
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nel caricamento dei dati';
+      this.error = errorMessage(e, 'Errore nel caricamento dei dati');
     } finally {
       this.loading = false;
     }
@@ -83,7 +84,7 @@ export class ClientiListComponent implements OnInit {
       await this.service.delete5({ id: item.id! });
       await this.load();
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nell\'eliminazione';
+      this.error = errorMessage(e, 'Errore nell\'eliminazione');
     }
   }
 }

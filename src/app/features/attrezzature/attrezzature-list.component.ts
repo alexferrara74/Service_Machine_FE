@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AttrezzatureService } from '../../api/services/attrezzature.service';
 import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
 import { PaginationComponent } from '../../shared/pagination.component';
+import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-attrezzature-list',
@@ -37,7 +38,7 @@ export class AttrezzatureListComponent implements OnInit {
       this.items = await this.service.getAll6();
       this.applyFilter();
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nel caricamento dei dati';
+      this.error = errorMessage(e, 'Errore nel caricamento dei dati');
     } finally {
       this.loading = false;
     }
@@ -88,7 +89,7 @@ export class AttrezzatureListComponent implements OnInit {
       }
       this.applyFilter();
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nella ricerca delle attrezzature';
+      this.error = errorMessage(e, 'Errore nella ricerca delle attrezzature');
     } finally {
       this.loading = false;
     }
@@ -108,7 +109,7 @@ export class AttrezzatureListComponent implements OnInit {
       await this.service.delete6({ id: item.id! });
       await this.load();
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nell\'eliminazione';
+      this.error = errorMessage(e, 'Errore nell\'eliminazione');
     }
   }
 }

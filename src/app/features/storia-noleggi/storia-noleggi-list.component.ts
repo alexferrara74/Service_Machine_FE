@@ -13,6 +13,7 @@ import { StoriaNoleggiManutenzioniService } from '../../api/services/storia-nole
 import { NoleggioManutenzioneResponse } from '../../api/models/noleggio-manutenzione-response';
 import { NoleggioManutenzioneEventoResponse } from '../../api/models/noleggio-manutenzione-evento-response';
 import { PaginationComponent } from '../../shared/pagination.component';
+import { errorMessage } from '../../shared/error-message';
 
 interface RentalMaintenanceRow {
   rental: StoriaNoleggioResponse;
@@ -320,7 +321,7 @@ export class StoriaNoleggioListComponent implements OnInit {
     try {
       await this.fetchPage(page, false);
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nel caricamento dei dati';
+      this.error = errorMessage(e, 'Errore nel caricamento dei dati');
     } finally {
       this.loading = false;
     }
@@ -331,7 +332,7 @@ export class StoriaNoleggioListComponent implements OnInit {
     try {
       this.catalogo = new Map((await this.catalogoService.getAll()).map(p => [p.articoloId, p]));
     } catch (e: any) {
-      this.articleError = e?.message ?? 'Impossibile recuperare i dettagli del prodotto';
+      this.articleError = errorMessage(e, 'Impossibile recuperare i dettagli del prodotto');
     }
   }
 
@@ -452,7 +453,7 @@ export class StoriaNoleggioListComponent implements OnInit {
       await this.service.delete1({ docId: item.docId! });
       await this.refresh();
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nell\'eliminazione';
+      this.error = errorMessage(e, 'Errore nell\'eliminazione');
     }
   }
 }

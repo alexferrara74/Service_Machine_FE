@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AttrezzatureService } from '../../api/services/attrezzature.service';
 import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
 import { AttrezzaturaRequest } from '../../api/models/attrezzatura-request';
+import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-attrezzature-detail',
@@ -54,7 +55,7 @@ export class AttrezzatureDetailComponent implements OnInit {
         stato: data.stato ?? ''
       };
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nel caricamento';
+      this.error = errorMessage(e, 'Errore nel caricamento');
     } finally {
       this.loading = false;
     }
@@ -71,7 +72,7 @@ export class AttrezzatureDetailComponent implements OnInit {
       }
       this.router.navigate(['/attrezzature']);
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nel salvataggio';
+      this.error = errorMessage(e, 'Errore nel salvataggio');
     } finally {
       this.saving = false;
     }
@@ -83,7 +84,7 @@ export class AttrezzatureDetailComponent implements OnInit {
       await this.service.delete6({ id: this.id! });
       this.router.navigate(['/attrezzature']);
     } catch (e: any) {
-      this.error = e?.message ?? 'Errore nell\'eliminazione';
+      this.error = errorMessage(e, 'Errore nell\'eliminazione');
     }
   }
 
