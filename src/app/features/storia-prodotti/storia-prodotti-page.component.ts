@@ -8,6 +8,7 @@ import { StoriaProdottoResponse } from '../../api/models/storia-prodotto-respons
 import { ClientiService } from '../../api/services/clienti.service';
 import { ClienteResponse } from '../../api/models/cliente-response';
 import { PaginationComponent } from '../../shared/pagination.component';
+import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-storia-prodotti-page',
@@ -81,7 +82,7 @@ import { PaginationComponent } from '../../shared/pagination.component';
       </section>
     </section>
   `,
-  styles: [`.page-header,.form-actions,.filter-row{display:flex;align-items:end;gap:12px;justify-content:space-between;flex-wrap:wrap}.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.form-grid label,.filter-row label{display:grid;gap:6px}.card{margin-bottom:20px;padding:20px;background:#fff;border-radius:12px;box-shadow:0 2px 8px #00000012}.form-control{padding:9px;border:1px solid #cbd5e1;border-radius:6px}.data-table{width:100%;border-collapse:collapse;margin:16px 0}.data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}.data-table small{display:block;margin-top:4px;color:#64748b;font-size:11px}.error-block{margin:12px 0;padding:10px;background:#fee2e2;color:#991b1b}.warning-block{margin:12px 0;padding:10px;background:#fff7ed;color:#9a3412;border-radius:6px}.btn{padding:8px 12px;border:0;border-radius:6px;cursor:pointer}.btn-primary{background:#2563eb;color:white}.btn-secondary{background:#e2e8f0}.btn-secondary:disabled{opacity:.5;cursor:not-allowed}.btn-danger{background:#dc2626;color:white}.loading{padding:20px;text-align:center}`]
+  styles: [`.page-header,.form-actions,.filter-row{display:flex;align-items:end;gap:12px;justify-content:space-between;flex-wrap:wrap}.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.form-grid label,.filter-row label{display:grid;gap:6px}.card{margin-bottom:20px;padding:20px;background:var(--surface);border-radius:12px;box-shadow:0 2px 8px #00000012}.form-control{padding:9px;border:1px solid var(--field);border-radius:6px}.data-table{width:100%;border-collapse:collapse;margin:16px 0}.data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid var(--line)}.data-table small{display:block;margin-top:4px;color:var(--muted);font-size:11px}.error-block{margin:12px 0;padding:10px;background:var(--danger-bg);color:var(--danger)}.warning-block{margin:12px 0;padding:10px;background:var(--warn-bg);color:var(--warn);border-radius:6px}.btn{padding:8px 12px;border:0;border-radius:6px;cursor:pointer}.btn-primary{background:var(--petrol);color:white}.btn-secondary{background:var(--line)}.btn-secondary:disabled{opacity:.5;cursor:not-allowed}.btn-danger{background:var(--danger);color:white}.loading{padding:20px;text-align:center}`]
 })
 export class StoriaProdottiPageComponent implements OnInit {
   items: StoriaProdottoResponse[] = [];
@@ -114,7 +115,7 @@ export class StoriaProdottiPageComponent implements OnInit {
     if (param) {
       this.id = Number(param); this.editing = true; this.loading = true;
       try { this.form = this.fromResponse(await this.service.getById({ id: this.id })); }
-      catch (error) { this.error = this.message(error, 'Errore nel caricamento della registrazione'); }
+      catch (error) { this.error = errorMessage(error, 'Errore nel caricamento della registrazione'); }
       finally { this.loading = false; }
       return;
     }
@@ -126,7 +127,7 @@ export class StoriaProdottiPageComponent implements OnInit {
     try {
       this.customers = await this.customersService.getAll5();
     } catch (error) {
-      this.customersError = this.message(error, 'Impossibile caricare i nomi e i codici dei clienti.');
+      this.customersError = errorMessage(error, 'Impossibile caricare i nomi e i codici dei clienti.');
     }
   }
 
@@ -136,7 +137,7 @@ export class StoriaProdottiPageComponent implements OnInit {
       this.items = await this.service.getAll();
       this.currentPage = 1;
     }
-    catch (error) { this.error = this.message(error, 'Errore nel caricamento dei prodotti'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nel caricamento dei prodotti'); }
     finally { this.loading = false; }
   }
 
@@ -148,7 +149,7 @@ export class StoriaProdottiPageComponent implements OnInit {
       else if (this.articoloFilter !== undefined) this.items = await this.service.getByArticolo({ articoloId: this.articoloFilter });
       else this.items = await this.service.getAll();
       this.currentPage = 1;
-    } catch (error) { this.error = this.message(error, 'Errore nella ricerca dei prodotti'); }
+    } catch (error) { this.error = errorMessage(error, 'Errore nella ricerca dei prodotti'); }
     finally { this.loading = false; }
   }
 
@@ -197,14 +198,14 @@ export class StoriaProdottiPageComponent implements OnInit {
       if (this.isNew) await this.service.create({ body: this.form });
       else if (this.id !== null) await this.service.update({ id: this.id, body: this.form });
       this.back();
-    } catch (error) { this.error = this.message(error, 'Errore nel salvataggio'); }
+    } catch (error) { this.error = errorMessage(error, 'Errore nel salvataggio'); }
     finally { this.saving = false; }
   }
 
   async remove(): Promise<void> {
     if (this.id === null || !confirm('Eliminare questa registrazione?')) return;
     try { await this.service.delete({ id: this.id }); this.back(); }
-    catch (error) { this.error = this.message(error, 'Errore nell’eliminazione'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nell’eliminazione'); }
   }
 
   private emptyForm(): StoriaProdottoRequest { return { codiceArticolo: '', quantita: 0 }; }
@@ -215,5 +216,4 @@ export class StoriaProdottiPageComponent implements OnInit {
       categoriaDescrizione: item.categoriaDescrizione, descrizione: item.descrizione, dataDoc: item.dataDoc
     };
   }
-  private message(error: unknown, fallback: string): string { return error instanceof Error ? error.message : fallback; }
 }

@@ -11,13 +11,18 @@
         <option value="marca">Filtra per marca</option>
         <option value="matricola">Cerca per matricola</option>
       </select>
+      <select *ngIf="apiFilter === 'stato'" [(ngModel)]="apiFilterValue" name="apiFilterStato" class="search-input">
+        <option value="">Tutti gli stati</option>
+        <option *ngFor="let s of stati" [value]="s.value">{{ s.label }}</option>
+      </select>
       <input
+        *ngIf="apiFilter !== 'stato'"
         type="text"
-        [placeholder]="apiFilter === 'stato' ? 'Stato' : apiFilter === 'marca' ? 'Marca' : 'Matricola'"
+        [placeholder]="apiFilter === 'marca' ? 'Marca' : 'Matricola'"
         [(ngModel)]="apiFilterValue"
         name="apiFilterValue"
         class="search-input" />
-      <button type="submit" class="btn btn-secondary">Cerca via API</button>
+      <button type="submit" class="btn btn-secondary">Cerca</button>
       <button type="button" class="btn btn-secondary" (click)="load()">Tutte</button>
     </form>
     <div class="search-bar">
@@ -53,7 +58,7 @@
             <td>{{ item.descrizione }}</td>
             <td>{{ item.marca }}</td>
             <td>{{ item.modello }}</td>
-            <td><span class="badge" [class]="'badge-' + (item.stato ?? '')">{{ item.stato }}</span></td>
+            <td><span class="badge" [class]="'badge-' + (item.stato ?? '')">{{ statoLabel(item.stato) }}</span></td>
             <td class="actions">
               <button class="btn btn-sm btn-secondary" (click)="edit(item)">✏️ Modifica</button>
               <button class="btn btn-sm btn-danger" (click)="deleteItem(item)">🗑️ Elimina</button>

@@ -6,6 +6,7 @@ import { AttrezzatureService } from '../../api/services/attrezzature.service';
 import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
 import { PaginationComponent } from '../../shared/pagination.component';
 import { errorMessage } from '../../shared/error-message';
+import { STATI_ATTREZZATURA, statoLabel } from '../../shared/stati-attrezzatura';
 
 @Component({
   selector: 'app-attrezzature-list',
@@ -22,6 +23,8 @@ export class AttrezzatureListComponent implements OnInit {
   searchTerm = '';
   apiFilter: 'stato' | 'marca' | 'matricola' = 'stato';
   apiFilterValue = '';
+  readonly stati = STATI_ATTREZZATURA;
+  readonly statoLabel = statoLabel;
   pageSize = 10;
   currentPage = 1;
 
@@ -51,7 +54,7 @@ export class AttrezzatureListComponent implements OnInit {
       !term ||
       (i.marca ?? '').toLowerCase().includes(term) ||
       (i.matricola ?? '').toLowerCase().includes(term) ||
-      (i.stato ?? '').toLowerCase().includes(term) ||
+      statoLabel(i.stato).toLowerCase().includes(term) ||
       (i.descrizione ?? '').toLowerCase().includes(term)
     );
   }

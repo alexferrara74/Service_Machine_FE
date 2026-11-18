@@ -25,6 +25,10 @@ npm test
 
 `npm run build` esegue il build Angular di produzione. `npm test` avvia i test unitari Jasmine/Karma (in CI: `npx ng test --watch=false --browsers=ChromeHeadless`). Coprono il componente radice, la pagina di sincronizzazione e l'helper dei messaggi di errore.
 
+## Tema e stili
+
+I colori vivono come variabili CSS in `src/styles.css` (`--petrol`, `--signal`, `--danger`, `--ok`, ...). Nei componenti usare `var(--nome)` invece dei codici esadecimali, così il look si cambia da un punto solo. Gli stati attrezzatura (`DISPONIBILE`, `IN_USO`, `IN_MANUTENZIONE`) e le loro etichette sono in `src/app/shared/stati-attrezzatura.ts`.
+
 ## Messaggi di errore
 
 Gli errori delle chiamate al backend vengono mostrati con il testo italiano restituito dal backend (campo `message`, es. «Il cliente non può essere eliminato perché ha noleggi…»). L'helper condiviso è `src/app/shared/error-message.ts` (`errorMessage(errore, testoDiRiserva)`): usarlo in ogni nuova schermata al posto di `e.message`, che per un errore HTTP contiene solo un testo tecnico.

@@ -139,8 +139,8 @@ interface RentalMaintenanceRow {
             <span *ngIf="row.error" class="status status-alert">{{ row.error }}</span>
             <span *ngIf="!row.error && row.state?.statoManutenzione === 'NON_CONFIGURATA'" class="status">Pianificazione richiesta</span>
             <span *ngIf="!row.error && row.state?.statoManutenzione === 'PROGRAMMATA'" class="status status-ok">Programmata</span>
-            <span *ngIf="!row.error && row.state?.statoManutenzione === 'IN_SCADENZA'" class="status status-alert">In scadenza</span>
-            <span *ngIf="!row.error && row.state?.statoManutenzione === 'IN_RITARDO'" class="status status-alert">In ritardo</span>
+            <span *ngIf="!row.error && row.state?.statoManutenzione === 'IN_SCADENZA'" class="status status-soon">In scadenza</span>
+            <span *ngIf="!row.error && row.state?.statoManutenzione === 'IN_RITARDO'" class="status status-late">In ritardo</span>
             <span *ngIf="row.saved" class="status status-ok">{{ row.saved }}</span>
             <span *ngIf="!row.state" class="status">Stato non disponibile</span>
           </td>
@@ -188,33 +188,33 @@ interface RentalMaintenanceRow {
   </section>
 </div>`,
   styles: [`
-.page{--ink:#172b4d;--muted:#66758b;--line:#e5ebf3;--blue:#2563eb;--blue-dark:#1d4ed8;--surface:#fff;padding:0;color:var(--ink);animation:page-in .35s ease-out}
+.page{--ink:var(--ink);--muted:var(--muted);--line:var(--line);--blue:var(--petrol);--blue-dark:var(--petrol-dark);--surface:#fff;padding:0;color:var(--ink);}
 .page-header{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px}.maintenance-header{margin-bottom:12px}
-.page-title{display:flex;align-items:center;gap:14px}.page-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#dbeafe,#eff6ff);font-size:23px;box-shadow:inset 0 0 0 1px #bfdbfe}
+.page-title{display:flex;align-items:center;gap:14px}.page-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:var(--info-bg);font-size:23px;box-shadow:inset 0 0 0 1px var(--info-bg)}
 .page-header h1{font-size:25px;letter-spacing:-.45px;font-weight:750;color:var(--ink)}.page-header p{margin-top:5px;color:var(--muted);font-size:13px}
-.card{background:var(--surface);border:1px solid #edf1f7;border-radius:16px;box-shadow:0 8px 24px #172b4d0a;padding:24px;animation:panel-in .3s ease-out}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:24px}
 .search-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.search-bar+.search-bar{margin-top:2px}
-.search-input{width:auto;min-width:180px;max-width:400px;padding:10px 13px;border:1px solid #d8e0eb;border-radius:9px;background:#fff;color:var(--ink);font-size:13px;outline:none;transition:border-color .18s,box-shadow .18s}
-.search-input:focus{border-color:#60a5fa;box-shadow:0 0 0 3px #dbeafe}.search-input::placeholder{color:#9aa8ba}
+.search-input{width:auto;min-width:180px;max-width:400px;padding:10px 13px;border:1px solid var(--field);border-radius:9px;background:var(--surface);color:var(--ink);font-size:13px;outline:none;transition:border-color .18s,box-shadow .18s}
+.search-input:focus{border-color:var(--petrol);box-shadow:0 0 0 3px var(--info-bg)}.search-input::placeholder{color:var(--muted)}
 .table-wrap{width:100%;overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:14px}
-.data-table{width:100%;border-collapse:separate;border-spacing:0;min-width:850px}.data-table th{position:sticky;top:0;background:#f5f8fc;text-align:left;padding:12px 14px;font-size:11px;letter-spacing:.045em;text-transform:uppercase;font-weight:700;color:#66758b;border-bottom:1px solid #e2e8f0;white-space:nowrap}
-.data-table td{padding:13px 14px;border-bottom:1px solid #edf1f6;color:#334155;vertical-align:middle;font-size:13px}.data-table tbody tr:last-child td{border-bottom:0}.data-table tbody tr{transition:background .15s}.data-table tbody tr:nth-child(even){background:#fbfcfe}.data-table tbody tr:hover{background:#f1f7ff}
-td.actions{white-space:nowrap}td.actions .btn+.btn{margin-left:8px}.empty-state{text-align:center;padding:48px 20px;color:#8190a5;background:linear-gradient(180deg,#fbfdff,#fff);border:1px dashed #dce5f0;border-radius:12px}
+.data-table{width:100%;border-collapse:separate;border-spacing:0;min-width:850px}.data-table th{position:sticky;top:0;background:var(--line);text-align:left;padding:12px 14px;font-size:12px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap}
+.data-table td{padding:13px 14px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:middle;font-size:13px}.data-table tbody tr:last-child td{border-bottom:0}.data-table tbody tr{transition:background .15s}.data-table tbody tr:nth-child(even){background:var(--paper-2)}.data-table tbody tr:hover{background:var(--info-bg)}
+td.actions{white-space:nowrap}td.actions .btn+.btn{margin-left:8px}.empty-state{text-align:center;padding:48px 20px;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px}
 .loading{text-align:center;padding:40px;color:var(--muted)}
-.error-block{background:#fff1f0;color:#b42318;border:1px solid #ffd5d2;padding:12px 16px;border-radius:10px;margin:12px 0}
-.article-warning{background:#fff8eb;color:#9a5b00;border:1px solid #fde2ad;padding:10px 14px;border-radius:9px;margin-top:12px}
+.error-block{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-bg);padding:12px 16px;border-radius:10px;margin:12px 0}
+.article-warning{background:var(--warn-bg);color:var(--warn);border:1px solid var(--signal);padding:10px 14px;border-radius:9px;margin-top:12px}
 .btn{padding:9px 14px;border-radius:9px;border:1px solid transparent;cursor:pointer;font-size:13px;font-weight:650;transition:transform .16s,box-shadow .16s,background .16s,opacity .16s}
-.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 10px #172b4d18}.btn:active:not(:disabled){transform:translateY(0)}.btn:disabled{opacity:.55;cursor:not-allowed}
-.btn-primary{background:linear-gradient(135deg,#3478f6,#205bd7);color:#fff;box-shadow:0 4px 10px #2563eb2b}.btn-secondary{background:#f1f5f9;color:#334155;border-color:#e5eaf1}.btn-secondary:hover:not(:disabled){background:#e8eef7}.btn-danger{background:#fff1f0;color:#c43227;border-color:#ffd5d2}.btn-danger:hover:not(:disabled){background:#ffe5e2}.btn-sm{padding:7px 10px;font-size:12px}
-.tabs{display:flex;gap:5px;margin-bottom:15px;padding:5px;width:max-content;max-width:100%;border:1px solid #e6ebf2;border-radius:12px;background:#eef2f7}
-.tabs button{display:flex;align-items:center;justify-content:center;padding:9px 16px;border:0;border-radius:8px;background:transparent;color:#64748b;cursor:pointer;font-size:13px;font-weight:650;transition:background .18s,color .18s,box-shadow .18s}
-.tabs button:hover:not(.active){color:#334155;background:#ffffff90}.tabs button.active{color:#1d4ed8;background:#fff;box-shadow:0 2px 7px #172b4d14}
+.btn:hover:not(:disabled){opacity:.85}.btn:active:not(:disabled){transform:translateY(0)}.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-primary{background:var(--petrol);color:#fff}.btn-secondary{background:var(--paper-2);color:var(--ink);border-color:var(--line)}.btn-secondary:hover:not(:disabled){background:var(--line)}.btn-danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-bg)}.btn-danger:hover:not(:disabled){background:#f7d6d2}.btn-sm{padding:7px 10px;font-size:12px}
+.tabs{display:flex;gap:5px;margin-bottom:15px;padding:5px;width:max-content;max-width:100%;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+.tabs button{display:flex;align-items:center;justify-content:center;padding:9px 16px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;font-weight:650;transition:background .18s,color .18s,box-shadow .18s}
+.tabs button:hover:not(.active){color:var(--ink);background:#ffffff90}.tabs button.active{color:var(--petrol-dark);background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .maintenance-header{display:flex;align-items:center;justify-content:space-between;gap:12px}.maintenance-header h2{font-size:18px;letter-spacing:-.2px}
 .maintenance-note{max-width:820px;color:var(--muted);font-size:13px;line-height:1.6;margin:8px 0 18px}
-.maintenance-table{min-width:1120px}.maintenance-table td:first-child{font-weight:650}.maintenance-table small{display:block;color:#8190a5;margin-top:4px;font-size:11px}.maintenance-table a{color:#245fc5;text-decoration:none}.maintenance-table a:hover{text-decoration:underline}
-.status{display:inline-flex;align-items:center;padding:6px 9px;border-radius:999px;font-size:11px;line-height:1.35;font-weight:700;background:#f1f5f9;color:#536277;white-space:normal;min-width:max-content}
-.status-ok{background:#e9f8ef;color:#168047}.status-alert{background:#fff3df;color:#a65b00}.event-list{min-width:260px;padding:8px 0 0 18px}.event-list li{margin:7px 0;font-size:12px;color:#475569}
-@keyframes page-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}@keyframes panel-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.maintenance-table{min-width:1120px}.maintenance-table td:first-child{font-weight:650}.maintenance-table small{display:block;color:var(--muted);margin-top:4px;font-size:11px}.maintenance-table a{color:var(--petrol);text-decoration:none}.maintenance-table a:hover{text-decoration:underline}
+.status{display:inline-flex;align-items:center;padding:6px 9px;border-radius:999px;font-size:11px;line-height:1.35;font-weight:700;background:var(--paper-2);color:var(--muted);white-space:normal;min-width:max-content}
+.status-ok{background:var(--ok-bg);color:var(--ok)}.status-alert{background:var(--warn-bg);color:var(--warn)}.status-soon{background:var(--signal);color:var(--ink)}.status-late{background:var(--danger);color:#fff}.event-list{min-width:260px;padding:8px 0 0 18px}.event-list li{margin:7px 0;font-size:12px;color:var(--muted)}
+
 @media(max-width:700px){.page-header{align-items:flex-start}.page-title{align-items:flex-start}.page-icon{width:42px;height:42px}.page-header h1{font-size:21px}.page-header p{max-width:320px;line-height:1.45}.card{padding:16px}.search-bar{align-items:stretch}.search-input{flex:1;min-width:0;max-width:none}.tabs{width:100%}.tabs button{flex:1;padding:9px 8px;font-size:12px}.maintenance-header{align-items:flex-start}}
 `]
 })
@@ -259,7 +259,7 @@ export class StoriaNoleggioListComponent implements OnInit {
             this.maintenanceService.getEventi(rental.docId!)
           ]);
         } catch (error) {
-          row.error = this.message(error, 'Errore nel caricamento dello stato manutenzione');
+          row.error = errorMessage(error, 'Errore nel caricamento dello stato manutenzione');
         }
         return row;
       }));
@@ -274,7 +274,7 @@ export class StoriaNoleggioListComponent implements OnInit {
       await this.maintenanceService.registraManutenzione(row.rental.docId);
       row.saved = 'Ordinaria registrata';
     } catch (error) {
-      row.error = this.message(error, 'Errore nella registrazione della manutenzione');
+      row.error = errorMessage(error, 'Errore nella registrazione della manutenzione');
       row.saving = false;
       return;
     }
@@ -284,7 +284,7 @@ export class StoriaNoleggioListComponent implements OnInit {
         this.maintenanceService.getEventi(row.rental.docId)
       ]);
     } catch (error) {
-      row.error = `Manutenzione registrata, ma aggiornamento dello stato non riuscito: ${this.message(error, 'errore di caricamento')}`;
+      row.error = `Manutenzione registrata, ma aggiornamento dello stato non riuscito: ${errorMessage(error, 'errore di caricamento')}`;
     } finally {
       row.saving = false;
     }
@@ -305,15 +305,12 @@ export class StoriaNoleggioListComponent implements OnInit {
       ]);
       row.saved = 'Straordinaria registrata';
     } catch (error) {
-      row.error = this.message(error, 'Errore nella registrazione della manutenzione straordinaria');
+      row.error = errorMessage(error, 'Errore nella registrazione della manutenzione straordinaria');
     } finally {
       row.saving = false;
     }
   }
 
-  private message(error: unknown, fallback: string): string {
-    return error instanceof Error ? error.message : fallback;
-  }
 
   async load(page = 1): Promise<void> {
     this.loading = true;
@@ -398,7 +395,7 @@ export class StoriaNoleggioListComponent implements OnInit {
       try {
         await this.fetchPage(page, false);
       } catch (error) {
-        this.error = this.message(error, 'Errore nel caricamento dei dati');
+        this.error = errorMessage(error, 'Errore nel caricamento dei dati');
       } finally {
         this.loading = false;
       }
@@ -409,7 +406,7 @@ export class StoriaNoleggioListComponent implements OnInit {
     try {
       await this.fetchPage(page, true);
     } catch (error) {
-      this.error = this.message(error, 'Errore nella ricerca dei noleggi');
+      this.error = errorMessage(error, 'Errore nella ricerca dei noleggi');
     } finally {
       this.loading = false;
     }
@@ -448,7 +445,7 @@ export class StoriaNoleggioListComponent implements OnInit {
   }
 
   async deleteItem(item: StoriaNoleggioResponse): Promise<void> {
-    if (!confirm(`Eliminare il noleggio con DocID "${item.docId}"?`)) return;
+    if (!confirm(`Eliminare il noleggio con DocID "${item.docId}"?\n\nVerranno eliminati anche il PDF allegato e lo storico delle manutenzioni. L'operazione non è reversibile.`)) return;
     try {
       await this.service.delete1({ docId: item.docId! });
       await this.refresh();

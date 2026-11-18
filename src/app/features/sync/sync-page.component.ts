@@ -45,12 +45,12 @@ interface SyncResponse {
   `,
   styles: [`
     .sync-page { padding: 24px; }
-    h1 { margin: 0 0 20px; color: #1e2a3a; font-size: 22px; }
-    .sync-button { padding: 12px 20px; border: 0; border-radius: 6px; background: #2563eb; color: white; font-size: 15px; cursor: pointer; }
+    h1 { margin: 0 0 20px; color: var(--ink); font-size: 22px; }
+    .sync-button { padding: 12px 20px; border: 0; border-radius: 6px; background: var(--petrol); color: white; font-size: 15px; cursor: pointer; }
     .sync-button:disabled { opacity: .6; cursor: wait; }
-    .success { color: #166534; }
-    .error { color: #b91c1c; }
-    .statistics { padding: 14px 20px; background: #f1f5f9; border-radius: 8px; line-height: 1.8; }
+    .success { color: var(--ok); }
+    .error { color: var(--danger); }
+    .statistics { padding: 14px 20px; background: var(--paper-2); border-radius: 8px; line-height: 1.8; }
   `]
 })
 export class SyncPageComponent {

@@ -6,6 +6,7 @@ import { AttrezzatureService } from '../../api/services/attrezzature.service';
 import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
 import { AttrezzaturaRequest } from '../../api/models/attrezzatura-request';
 import { errorMessage } from '../../shared/error-message';
+import { STATI_ATTREZZATURA } from '../../shared/stati-attrezzatura';
 
 @Component({
   selector: 'app-attrezzature-detail',
@@ -26,10 +27,10 @@ export class AttrezzatureDetailComponent implements OnInit {
     marca: '',
     modello: '',
     matricola: '',
-    stato: ''
+    stato: 'DISPONIBILE'
   };
 
-  statiOptions = ['Disponibile', 'Noleggiata', 'In Manutenzione'];
+  readonly statiOptions = STATI_ATTREZZATURA;
 
   constructor(
     private service: AttrezzatureService,

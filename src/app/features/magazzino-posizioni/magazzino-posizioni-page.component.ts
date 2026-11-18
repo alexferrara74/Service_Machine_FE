@@ -6,6 +6,7 @@ import { MagazzinoPosizioniService } from '../../api/services/magazzino-posizion
 import { PosizioneArticoloRequest } from '../../api/models/posizione-articolo-request';
 import { PosizioneArticoloResponse } from '../../api/models/posizione-articolo-response';
 import { PaginationComponent } from '../../shared/pagination.component';
+import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-magazzino-posizioni-page',
@@ -77,24 +78,24 @@ import { PaginationComponent } from '../../shared/pagination.component';
     .form-actions{grid-column:1/-1;justify-content:flex-end;flex-wrap:wrap}
     .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
     .form-grid label,.filter-row label{display:grid;gap:6px}
-    .inventory-tools{display:grid;gap:14px;margin-bottom:20px;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px}
+    .inventory-tools{display:grid;gap:14px;margin-bottom:20px;padding:16px;background:var(--paper-2);border:1px solid var(--line);border-radius:10px}
     .filter-row{align-items:end;flex-wrap:wrap}
     .search-filters label{flex:1 1 180px}
-    .stock-check{padding-top:14px;border-top:1px solid #e2e8f0}
+    .stock-check{padding-top:14px;border-top:1px solid var(--line)}
     .stock-check label{flex:0 1 260px}
     .filter-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .stock-result{align-self:center;color:#1e293b}
-    .card{margin-bottom:20px;padding:20px;background:#fff;border-radius:12px;box-shadow:0 2px 8px #00000012}
-    .form-control{width:100%;min-width:0;padding:9px;border:1px solid #cbd5e1;border-radius:6px}
+    .stock-result{align-self:center;color:var(--ink)}
+    .card{margin-bottom:20px;padding:20px;background:var(--surface);border-radius:12px;box-shadow:0 2px 8px #00000012}
+    .form-control{width:100%;min-width:0;padding:9px;border:1px solid var(--field);border-radius:6px}
     .table-wrap{overflow-x:auto}
     .data-table{width:100%;border-collapse:collapse;margin:16px 0}
-    .data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}
+    .data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid var(--line)}
     .data-table th:last-child,.data-table td:last-child{text-align:right}
-    .error-block{margin:12px 0;padding:10px;background:#fee2e2;color:#991b1b}
+    .error-block{margin:12px 0;padding:10px;background:var(--danger-bg);color:var(--danger)}
     .btn{padding:9px 14px;border:0;border-radius:6px;cursor:pointer;white-space:nowrap}
-    .btn-primary{background:#2563eb;color:white}
-    .btn-secondary{background:#e2e8f0}
-    .btn-danger{background:#dc2626;color:white}
+    .btn-primary{background:var(--petrol);color:white}
+    .btn-secondary{background:var(--line)}
+    .btn-danger{background:var(--danger);color:white}
     .loading{padding:20px;text-align:center}
     @media(max-width:600px){.page-header{align-items:stretch;flex-direction:column}.page-header .btn,.filter-actions .btn{width:100%}.filter-actions{width:100%}.filter-actions .btn{flex:1}.stock-check label{flex-basis:100%}.card{padding:14px}}
   `]
@@ -125,7 +126,7 @@ export class MagazzinoPosizioniPageComponent implements OnInit {
       try {
         const item = await this.service.getById3({ id: this.id });
         this.form = { articoloId: item.articoloId ?? 0, ubicazioneId: item.ubicazioneId ?? 0, quantitaPresente: item.quantitaPresente ?? 0 };
-      } catch (error) { this.error = this.message(error, 'Errore nel caricamento della posizione'); }
+      } catch (error) { this.error = errorMessage(error, 'Errore nel caricamento della posizione'); }
       finally { this.loading = false; }
       return;
     }
@@ -135,7 +136,7 @@ export class MagazzinoPosizioniPageComponent implements OnInit {
   async load(): Promise<void> {
     this.loading = true; this.error = '';
     try { this.items = await this.service.getAll3(); this.currentPage = 1; }
-    catch (error) { this.error = this.message(error, 'Errore nel caricamento delle posizioni'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nel caricamento delle posizioni'); }
     finally { this.loading = false; }
   }
 
@@ -146,7 +147,7 @@ export class MagazzinoPosizioniPageComponent implements OnInit {
       else if (this.articoloFilter !== undefined) this.items = await this.service.getByArticolo2({ articoloId: this.articoloFilter });
       else this.items = await this.service.getAll3();
       this.currentPage = 1;
-    } catch (error) { this.error = this.message(error, 'Errore nella ricerca'); }
+    } catch (error) { this.error = errorMessage(error, 'Errore nella ricerca'); }
     finally { this.loading = false; }
   }
 
@@ -175,7 +176,7 @@ export class MagazzinoPosizioniPageComponent implements OnInit {
     if (this.stockArticleId === undefined) return;
     this.error = '';
     try { this.stock = await this.service.getGiacenzaTotale({ articoloId: this.stockArticleId }); }
-    catch (error) { this.error = this.message(error, 'Errore nel calcolo della giacenza'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nel calcolo della giacenza'); }
   }
 
   create(): void { this.router.navigate(['/magazzino-posizioni', 'new']); }
@@ -188,15 +189,14 @@ export class MagazzinoPosizioniPageComponent implements OnInit {
       if (this.isNew) await this.service.create3({ body: this.form });
       else if (this.id !== null) await this.service.update3({ id: this.id, body: this.form });
       this.back();
-    } catch (error) { this.error = this.message(error, 'Errore nel salvataggio'); }
+    } catch (error) { this.error = errorMessage(error, 'Errore nel salvataggio'); }
     finally { this.saving = false; }
   }
 
   async remove(): Promise<void> {
     if (this.id === null || !confirm('Eliminare questa posizione?')) return;
     try { await this.service.delete3({ id: this.id }); this.back(); }
-    catch (error) { this.error = this.message(error, 'Errore nell’eliminazione'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nell’eliminazione'); }
   }
 
-  private message(error: unknown, fallback: string): string { return error instanceof Error ? error.message : fallback; }
 }

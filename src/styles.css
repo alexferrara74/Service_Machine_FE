@@ -1,4 +1,55 @@
-/* You can add global styles to this file, and also import other style files */
+/* Token del tema: i componenti li usano con var(--nome), così il look si cambia da qui. */
+:root {
+  --ink: #1c2528;
+  --muted: #5a666b;
+  --line: #d8dedc;      /* filetti e separatori */
+  --field: #8c9895;     /* bordo dei campi: abbastanza scuro da vedersi */
+  --paper: #edf0ee;     /* sfondo pagina */
+  --paper-2: #f5f7f6;
+  --surface: #ffffff;
+  --petrol: #12414a;    /* azioni primarie e sidebar */
+  --petrol-dark: #0c2f36;
+  --signal: #f2b705;    /* giallo da segnaletica: solo marcatori e "in scadenza" */
+  --danger: #b42318;
+  --danger-bg: #fdecea;
+  --ok: #1f7a4d;
+  --ok-bg: #e6f4ec;
+  --warn: #7a5600;
+  --warn-bg: #fff3cf;
+  --info: #12414a;
+  --info-bg: #dcebed;
+}
+
+html {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+body { margin: 0; }
+
+/* Campi e card con width:100% restano nella loro colonna invece di sforare di padding e bordo. */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Cifre incolonnate: quantità, ID e date si leggono in verticale. */
+table { font-variant-numeric: tabular-nums; }
+
+:focus-visible {
+  outline: 2px solid var(--petrol);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 /* Spaziatura uniforme dei gruppi di pulsanti; gli stili dei componenti hanno la precedenza. */
 .form-actions, .header-actions, .document-actions {
@@ -7,3 +58,16 @@
   gap: 12px;
 }
 .form-actions { margin-top: 24px; }
+
+/* Barra di ricerca: i controlli vanno a capo con uno spazio costante invece di toccarsi. */
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Telefono: le tabelle larghe scorrono dentro la card invece di uscire dallo schermo. */
+@media (max-width: 800px) {
+  .card { overflow-x: auto; }
+}

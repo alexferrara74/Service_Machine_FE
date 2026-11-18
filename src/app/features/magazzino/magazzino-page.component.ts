@@ -6,6 +6,7 @@ import { MagazzinoService } from '../../api/services/magazzino.service';
 import { MagazzinoRequest } from '../../api/models/magazzino-request';
 import { MagazzinoResponse } from '../../api/models/magazzino-response';
 import { PaginationComponent } from '../../shared/pagination.component';
+import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-magazzino-page',
@@ -65,17 +66,17 @@ import { PaginationComponent } from '../../shared/pagination.component';
     .form-actions{grid-column:1/-1;justify-content:flex-end;flex-wrap:wrap}
     .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
     .form-grid label{display:grid;gap:6px}
-    .card{margin-bottom:20px;padding:20px;background:#fff;border-radius:12px;box-shadow:0 2px 8px #00000012}
-    .form-control{min-width:0;padding:9px;border:1px solid #cbd5e1;border-radius:6px}
+    .card{margin-bottom:20px;padding:20px;background:var(--surface);border-radius:12px;box-shadow:0 2px 8px #00000012}
+    .form-control{min-width:0;padding:9px;border:1px solid var(--field);border-radius:6px}
     .table-wrap{overflow-x:auto}
     .data-table{width:100%;border-collapse:collapse;margin:16px 0}
-    .data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}
+    .data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid var(--line)}
     .data-table th:last-child,.data-table td:last-child{text-align:right}
-    .error-block{margin:12px 0;padding:10px;background:#fee2e2;color:#991b1b}
+    .error-block{margin:12px 0;padding:10px;background:var(--danger-bg);color:var(--danger)}
     .btn{padding:9px 14px;border:0;border-radius:6px;cursor:pointer;white-space:nowrap}
-    .btn-primary{background:#2563eb;color:white}
-    .btn-secondary{background:#e2e8f0}
-    .btn-danger{background:#dc2626;color:white}
+    .btn-primary{background:var(--petrol);color:white}
+    .btn-secondary{background:var(--line)}
+    .btn-danger{background:var(--danger);color:white}
     .loading{padding:20px;text-align:center}
     @media(max-width:600px){.page-header{align-items:stretch;flex-direction:column}.page-header .btn{width:100%}.card{padding:14px}}
   `]
@@ -100,7 +101,7 @@ export class MagazzinoPageComponent implements OnInit {
     if (param) {
       this.id = Number(param); this.editing = true; this.loading = true;
       try { this.form = this.fromResponse(await this.service.getById2({ id: this.id })); }
-      catch (error) { this.error = this.message(error, 'Errore nel caricamento dell’ubicazione'); }
+      catch (error) { this.error = errorMessage(error, 'Errore nel caricamento dell’ubicazione'); }
       finally { this.loading = false; }
       return;
     }
@@ -110,7 +111,7 @@ export class MagazzinoPageComponent implements OnInit {
   async load(): Promise<void> {
     this.loading = true; this.error = '';
     try { this.items = await this.service.getAll2(); this.currentPage = 1; }
-    catch (error) { this.error = this.message(error, 'Errore nel caricamento delle ubicazioni'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nel caricamento delle ubicazioni'); }
     finally { this.loading = false; }
   }
 
@@ -139,19 +140,18 @@ export class MagazzinoPageComponent implements OnInit {
       if (this.isNew) await this.service.create2({ body: this.form });
       else if (this.id !== null) await this.service.update2({ id: this.id, body: this.form });
       this.back();
-    } catch (error) { this.error = this.message(error, 'Errore nel salvataggio'); }
+    } catch (error) { this.error = errorMessage(error, 'Errore nel salvataggio'); }
     finally { this.saving = false; }
   }
 
   async remove(): Promise<void> {
     if (this.id === null || !confirm('Eliminare questa ubicazione?')) return;
     try { await this.service.delete2({ id: this.id }); this.back(); }
-    catch (error) { this.error = this.message(error, 'Errore nell’eliminazione'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nell’eliminazione'); }
   }
 
   private emptyForm(): MagazzinoRequest { return { codiceUbicazione: '', zona: '' }; }
   private fromResponse(item: MagazzinoResponse): MagazzinoRequest {
     return { codiceUbicazione: item.codiceUbicazione ?? '', zona: item.zona ?? '', scaffale: item.scaffale, ripiano: item.ripiano, capacitaMax: item.capacitaMax, note: item.note };
   }
-  private message(error: unknown, fallback: string): string { return error instanceof Error ? error.message : fallback; }
 }

@@ -106,25 +106,25 @@ import { errorMessage } from '../../shared/error-message';
 </div>`,
   styles: [`
 .page{padding:0}.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-.page-header h1{font-size:22px;font-weight:700;color:#1e2a3a}.header-actions{display:flex;gap:10px}
-.card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:24px}
+.page-header h1{font-size:22px;font-weight:700;color:var(--ink)}.header-actions{display:flex;gap:10px}
+.card{background:var(--surface);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:24px}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .form-group{display:flex;flex-direction:column;gap:6px}
-.form-group label{font-weight:600;color:#475569;font-size:13px}
-.form-control{padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;width:100%}
-.form-actions{margin-top:24px;display:flex;gap:12px;flex-wrap:wrap}.document-hint{color:#64748b;font-size:13px;margin:0 0 4px}
-.loading{text-align:center;padding:40px;color:#64748b}
-.error-block{background:#fee2e2;color:#b91c1c;padding:12px 16px;border-radius:8px;margin-bottom:12px}
-.article-info{margin-top:16px;padding:12px;background:#eff6ff;border-radius:8px;color:#1e3a8a}
-.article-warning{margin-top:12px;padding:10px;background:#fff7ed;color:#9a3412;border-radius:8px}
-.document-section{margin-top:28px;padding-top:20px;border-top:1px solid #e2e8f0}
-.document-section h2{margin:0 0 12px;color:#1e2a3a;font-size:18px}
-.document-picker{display:grid;gap:8px;max-width:400px;margin:16px 0;font-weight:600;color:#475569}
+.form-group label{font-weight:600;color:var(--muted);font-size:13px}
+.form-control{padding:10px 12px;border:1px solid var(--field);border-radius:6px;font-size:14px;width:100%}
+.form-actions{margin-top:24px;display:flex;gap:12px;flex-wrap:wrap}.document-hint{color:var(--muted);font-size:13px;margin:0 0 4px}
+.loading{text-align:center;padding:40px;color:var(--muted)}
+.error-block{background:var(--danger-bg);color:var(--danger);padding:12px 16px;border-radius:8px;margin-bottom:12px}
+.article-info{margin-top:16px;padding:12px;background:var(--info-bg);border-radius:8px;color:var(--info)}
+.article-warning{margin-top:12px;padding:10px;background:var(--warn-bg);color:var(--warn);border-radius:8px}
+.document-section{margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
+.document-section h2{margin:0 0 12px;color:var(--ink);font-size:18px}
+.document-picker{display:grid;gap:8px;max-width:400px;margin:16px 0;font-weight:600;color:var(--muted)}
 .document-actions{display:flex;gap:10px;flex-wrap:wrap}
-.document-selection{color:#475569}
-.success-block{padding:10px;background:#dcfce7;color:#166534;border-radius:8px}
+.document-selection{color:var(--muted)}
+.success-block{padding:10px;background:var(--ok-bg);color:var(--ok);border-radius:8px}
 .btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:14px;font-weight:500}.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-primary{background:#1a73e8;color:#fff}.btn-secondary{background:#e2e8f0;color:#334155}.btn-danger{background:#e53935;color:#fff}
+.btn-primary{background:var(--petrol);color:#fff}.btn-secondary{background:var(--line);color:var(--ink)}.btn-danger{background:var(--danger);color:#fff}
 `]
 })
 export class StoriaNoleggioDetailComponent implements OnInit {
@@ -281,7 +281,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
       input.value = '';
       this.documentSuccess = 'Documento caricato correttamente.';
     } catch (error) {
-      this.documentError = this.message(error, 'Errore durante il caricamento del documento.');
+      this.documentError = errorMessage(error, 'Errore durante il caricamento del documento.');
     } finally {
       this.documentUploading = false;
     }
@@ -301,7 +301,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch (error) {
-      this.documentError = this.message(error, 'Errore durante il download del documento.');
+      this.documentError = errorMessage(error, 'Errore durante il download del documento.');
     } finally {
       this.documentDownloading = false;
     }
@@ -318,7 +318,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
       if (error instanceof HttpErrorResponse && error.status === 404) {
         this.documentName = '';
       } else {
-        this.documentError = this.message(error, 'Impossibile verificare il documento del noleggio.');
+        this.documentError = errorMessage(error, 'Impossibile verificare il documento del noleggio.');
       }
     } finally {
       this.documentLoading = false;
@@ -341,7 +341,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
             this.documentFile = null;
           } catch (error) {
             // Il noleggio è già salvato: resta in pagina per ritentare l'upload.
-            this.documentError = this.message(error, 'Noleggio salvato, ma caricamento del PDF non riuscito.');
+            this.documentError = errorMessage(error, 'Noleggio salvato, ma caricamento del PDF non riuscito.');
           }
         }
         await this.router.navigate(['/noleggi', this.id]);
@@ -358,7 +358,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
   }
 
   async deleteItem(): Promise<void> {
-    if (!confirm('Eliminare questo noleggio?')) return;
+    if (!confirm(`Eliminare questo noleggio?\n\nVerranno eliminati anche il PDF allegato e lo storico delle manutenzioni. L'operazione non è reversibile.`)) return;
     try {
       await this.service.delete1({ docId: this.id! });
       this.router.navigate(['/noleggi']);
@@ -371,7 +371,4 @@ export class StoriaNoleggioDetailComponent implements OnInit {
     this.router.navigate(['/noleggi']);
   }
 
-  private message(error: unknown, fallback: string): string {
-    return error instanceof Error ? error.message : fallback;
-  }
 }

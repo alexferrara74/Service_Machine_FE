@@ -27,15 +27,15 @@ import { FormsModule } from '@angular/forms';
   `,
   styles: [`
     .pagination,.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .pagination{justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid #e5ebf3}
-    .summary,.page-number,.page-size{color:#66758b;font-size:12px}
+    .pagination{justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+    .summary,.page-number,.page-size{color:var(--muted);font-size:12px}
     .controls{justify-content:flex-end}
     .page-size{display:flex;align-items:center;gap:7px}
-    select,button{min-height:34px;padding:6px 10px;border:1px solid #dce3ec;border-radius:8px;background:#fff;color:#334155;font:inherit}
+    select,button{min-height:34px;padding:6px 10px;border:1px solid var(--field);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
     button{cursor:pointer;font-size:12px;font-weight:600;transition:background .15s,border-color .15s}
-    button:hover:not(:disabled){background:#f1f6fd;border-color:#b8c9e0}
+    button:hover:not(:disabled){background:var(--info-bg);border-color:var(--petrol)}
     button:disabled{opacity:.45;cursor:not-allowed}
-    select:focus-visible,button:focus-visible{outline:3px solid #bfdbfe;outline-offset:1px}
+    select:focus-visible,button:focus-visible{outline:3px solid var(--info-bg);outline-offset:1px}
     @media(max-width:650px){.pagination,.controls{justify-content:center}.pagination{flex-direction:column}}
   `]
 })

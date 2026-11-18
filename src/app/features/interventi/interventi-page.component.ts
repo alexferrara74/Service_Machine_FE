@@ -10,6 +10,7 @@ import { RicambioResponse } from '../../api/models/ricambio-response';
 import { AttrezzatureService } from '../../api/services/attrezzature.service';
 import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
 import { PaginationComponent } from '../../shared/pagination.component';
+import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-interventi-page',
@@ -30,8 +31,8 @@ import { PaginationComponent } from '../../shared/pagination.component';
           <div class="form-grid">
             <label>Cliente ID<input class="form-control" type="number" [(ngModel)]="form.clienteId" name="clienteId" required></label>
             <label>Titolo<input class="form-control" [(ngModel)]="form.titolo" name="titolo" required></label>
-            <label>Data apertura<input class="form-control" type="date" [(ngModel)]="form.dataApertura" name="dataApertura" required></label>
-            <label>Data chiusura<input class="form-control" type="date" [(ngModel)]="form.dataChiusura" name="dataChiusura"></label>
+            <label>Data apertura<input class="form-control" type="datetime-local" [(ngModel)]="form.dataApertura" name="dataApertura" required></label>
+            <label>Data chiusura<input class="form-control" type="datetime-local" [(ngModel)]="form.dataChiusura" name="dataChiusura"></label>
             <label>Matricola attrezzatura<input class="form-control" list="matricole" [(ngModel)]="form.matricolaAttrezzatura" name="matricola" required><datalist id="matricole"><option *ngFor="let a of attrezzature" [value]="a.matricola ?? ''">{{ a.descrizione }}</option></datalist></label>
             <label>Stato<input class="form-control" [(ngModel)]="form.stato" name="stato" required></label>
             <label>Costo manodopera<input class="form-control" type="number" step="0.01" [(ngModel)]="form.costoManodopera" name="costo"></label>
@@ -70,7 +71,7 @@ import { PaginationComponent } from '../../shared/pagination.component';
             <label>Codice<input class="form-control" [(ngModel)]="ricambioForm.codiceRicambio" name="codiceRicambio"></label>
             <label>Descrizione<input class="form-control" [(ngModel)]="ricambioForm.descrizioneRicambio" name="descrizioneRicambio"></label>
             <label>Prezzo unitario<input class="form-control" type="number" step="0.01" [(ngModel)]="ricambioForm.prezzoUnitario" name="prezzoUnitario"></label>
-            <button class="btn btn-primary">Aggiungi ricambio</button>
+            <button class="btn btn-primary" [disabled]="ricambioSaving">{{ ricambioSaving ? 'Aggiunta...' : 'Aggiungi ricambio' }}</button>
           </form>
         </section>
       </section>
@@ -103,7 +104,7 @@ import { PaginationComponent } from '../../shared/pagination.component';
       </section>
     </section>
   `,
-  styles: [`.page-header,.form-actions,.filter-row{display:flex;align-items:center;gap:12px;justify-content:space-between}.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.form-grid label,.filter-row label{display:grid;gap:6px}.nested{margin-top:20px}.card{margin-bottom:20px;padding:20px;background:#fff;border-radius:12px;box-shadow:0 2px 8px #00000012}.form-control{padding:9px;border:1px solid #cbd5e1;border-radius:6px}.data-table{width:100%;border-collapse:collapse;margin:16px 0}.data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}.error-block{margin:12px 0;padding:10px;background:#fee2e2;color:#991b1b}.btn{padding:8px 12px;border:0;border-radius:6px;cursor:pointer}.btn-primary{background:#2563eb;color:white}.btn-secondary{background:#e2e8f0}.btn-danger{background:#dc2626;color:white}.loading{padding:20px;text-align:center}`]
+  styles: [`.page-header,.form-actions,.filter-row{display:flex;align-items:center;gap:12px;justify-content:space-between}.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.form-grid label,.filter-row label{display:grid;gap:6px}.nested{margin-top:20px}.card{margin-bottom:20px;padding:20px;background:var(--surface);border-radius:12px;box-shadow:0 2px 8px #00000012}.form-control{padding:9px;border:1px solid var(--field);border-radius:6px}.data-table{width:100%;border-collapse:collapse;margin:16px 0}.data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid var(--line)}.error-block{margin:12px 0;padding:10px;background:var(--danger-bg);color:var(--danger)}.btn{padding:8px 12px;border:0;border-radius:6px;cursor:pointer}.btn-primary{background:var(--petrol);color:white}.btn-secondary{background:var(--line)}.btn-danger{background:var(--danger);color:white}.loading{padding:20px;text-align:center}`]
 })
 export class InterventiPageComponent implements OnInit {
   items: InterventoResponse[] = [];
@@ -115,6 +116,7 @@ export class InterventiPageComponent implements OnInit {
   isNew = false;
   error = '';
   ricambiError = '';
+  ricambioSaving = false;
   id: number | null = null;
   clienteFilter?: number;
   pageSize = 10;
@@ -144,7 +146,7 @@ export class InterventiPageComponent implements OnInit {
         this.ricambioForm.interventoId = this.id;
         await this.loadRicambi();
       } catch (error) {
-        this.error = this.message(error, 'Errore nel caricamento dell’intervento');
+        this.error = errorMessage(error, 'Errore nel caricamento dell’intervento');
       } finally {
         this.loading = false;
       }
@@ -157,7 +159,7 @@ export class InterventiPageComponent implements OnInit {
     this.loading = true;
     this.error = '';
     try { this.items = await this.service.getAll4(); this.currentPage = 1; }
-    catch (error) { this.error = this.message(error, 'Errore nel caricamento degli interventi'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nel caricamento degli interventi'); }
     finally { this.loading = false; }
   }
 
@@ -166,7 +168,7 @@ export class InterventiPageComponent implements OnInit {
     this.loading = true;
     this.error = '';
     try { this.items = await this.service.getByCliente2({ clienteId: this.clienteFilter }); this.currentPage = 1; }
-    catch (error) { this.error = this.message(error, 'Errore nel filtro per cliente'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nel filtro per cliente'); }
     finally { this.loading = false; }
   }
 
@@ -212,63 +214,59 @@ export class InterventiPageComponent implements OnInit {
       if (this.isNew) await this.service.create4({ body });
       else if (this.id !== null) await this.service.update4({ id: this.id, body });
       this.back();
-    } catch (error) { this.error = this.message(error, 'Errore nel salvataggio'); }
+    } catch (error) { this.error = errorMessage(error, 'Errore nel salvataggio'); }
     finally { this.saving = false; }
   }
 
   async deleteIntervento(): Promise<void> {
     if (this.id === null || !confirm('Eliminare questo intervento?')) return;
     try { await this.service.delete4({ id: this.id }); this.back(); }
-    catch (error) { this.error = this.message(error, 'Errore nell’eliminazione'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nell’eliminazione'); }
   }
 
   async loadRicambi(): Promise<void> {
     if (this.id === null) return;
     this.ricambiError = '';
     try { this.ricambi = await this.service.getRicambi({ id: this.id }); this.ricambiPage = 1; }
-    catch (error) { this.ricambiError = this.message(error, 'Errore nel caricamento dei ricambi'); }
+    catch (error) { this.ricambiError = errorMessage(error, 'Errore nel caricamento dei ricambi'); }
   }
 
   async addRicambio(): Promise<void> {
-    if (this.id === null) return;
+    if (this.id === null || this.ricambioSaving) return;
     this.ricambiError = '';
+    this.ricambioSaving = true;
     try {
       await this.service.addRicambio({ id: this.id, body: { ...this.ricambioForm, interventoId: this.id } });
       this.ricambioForm = { articoloId: 0, interventoId: this.id, quantitaUtilizzata: 1 };
       await this.loadRicambi();
-    } catch (error) { this.ricambiError = this.message(error, 'Errore nell’aggiunta del ricambio'); }
+    } catch (error) { this.ricambiError = errorMessage(error, 'Errore nell’aggiunta del ricambio'); }
+    finally { this.ricambioSaving = false; }
   }
 
   async removeRicambio(item: RicambioResponse): Promise<void> {
     if (this.id === null || item.id === undefined || !confirm('Rimuovere questo ricambio?')) return;
     try { await this.service.deleteRicambio({ id: this.id, ricambioId: item.id }); await this.loadRicambi(); }
-    catch (error) { this.ricambiError = this.message(error, 'Errore nella rimozione del ricambio'); }
+    catch (error) { this.ricambiError = errorMessage(error, 'Errore nella rimozione del ricambio'); }
   }
 
   private emptyForm(): InterventoRequest {
-    return { clienteId: 0, dataApertura: new Date().toISOString().slice(0, 10), stato: '', titolo: '' };
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return { clienteId: 0, dataApertura: now.toISOString().slice(0, 16), stato: '', titolo: '' };
   }
 
-  // Gli input date producono yyyy-MM-dd, il BE vuole un LocalDateTime.
+  // datetime-local produce yyyy-MM-ddTHH:mm, che il BE accetta come LocalDateTime: l'ora non si perde a ogni modifica.
   private toRequest(): InterventoRequest {
-    const { dataApertura, dataChiusura } = this.form;
-    return {
-      ...this.form,
-      dataApertura: `${dataApertura}T00:00:00`,
-      dataChiusura: dataChiusura ? `${dataChiusura}T00:00:00` : undefined
-    };
+    return { ...this.form, dataChiusura: this.form.dataChiusura || undefined };
   }
 
   private fromResponse(data: InterventoResponse): InterventoRequest {
     return {
-      clienteId: data.clienteId ?? 0, titolo: data.titolo ?? '', dataApertura: data.dataApertura?.slice(0, 10) ?? '',
-      dataChiusura: data.dataChiusura?.slice(0, 10), matricolaAttrezzatura: data.matricolaAttrezzatura, stato: data.stato ?? '',
+      clienteId: data.clienteId ?? 0, titolo: data.titolo ?? '', dataApertura: data.dataApertura?.slice(0, 16) ?? '',
+      dataChiusura: data.dataChiusura?.slice(0, 16), matricolaAttrezzatura: data.matricolaAttrezzatura, stato: data.stato ?? '',
       costoManodopera: data.costoManodopera, descrizioneProblema: data.descrizioneProblema,
       soluzioneApplicata: data.soluzioneApplicata
     };
   }
 
-  private message(error: unknown, fallback: string): string {
-    return error instanceof Error ? error.message : fallback;
-  }
 }

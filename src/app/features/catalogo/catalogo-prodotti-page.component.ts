@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../../shared/pagination.component';
 import { CatalogoProdottiService } from './catalogo-prodotti.service';
 import { ProdottoCatalogo } from './prodotto-catalogo';
+import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-catalogo-prodotti-page',
@@ -83,14 +84,14 @@ import { ProdottoCatalogo } from './prodotto-catalogo';
   styles: [`
     .page-header,.filter-row{display:flex;align-items:end;gap:12px;justify-content:space-between;flex-wrap:wrap}
     .page-header{margin-bottom:20px}
-    .page-header h1{margin:0;color:#1e2a3a;font-size:22px}
-    .page-header p{margin:6px 0 0;color:#64748b}
+    .page-header h1{margin:0;color:var(--ink);font-size:22px}
+    .page-header p{margin:6px 0 0;color:var(--muted)}
     .filter-row label{display:grid;gap:6px;min-width:190px}
-    .card{padding:20px;background:#fff;border-radius:12px;box-shadow:0 2px 8px #00000012}
-    .form-control{padding:9px;border:1px solid #cbd5e1;border-radius:6px}
+    .card{padding:20px;background:var(--surface);border-radius:12px;box-shadow:0 2px 8px #00000012}
+    .form-control{padding:9px;border:1px solid var(--field);border-radius:6px}
     .data-table{width:100%;border-collapse:collapse;margin:16px 0}
-    .data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}
-    .error-block{margin:12px 0;padding:10px;background:#fee2e2;color:#991b1b}
+    .data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid var(--line)}
+    .error-block{margin:12px 0;padding:10px;background:var(--danger-bg);color:var(--danger)}
     .loading{padding:20px;text-align:center}
   `]
 })
@@ -117,7 +118,7 @@ export class CatalogoProdottiPageComponent implements OnInit {
       this.items = await this.service.getAll();
       this.currentPage = 1;
     } catch (error) {
-      this.error = error instanceof Error ? error.message : 'Impossibile caricare il catalogo ERP.';
+      this.error = errorMessage(error, 'Impossibile caricare il catalogo ERP.');
     } finally {
       this.loading = false;
     }

@@ -32,8 +32,7 @@
         <div class="form-group">
           <label>Stato</label>
           <select [(ngModel)]="form.stato" name="stato" class="form-control">
-            <option value="">-- Seleziona stato --</option>
-            <option *ngFor="let s of statiOptions" [value]="s">{{ s }}</option>
+            <option *ngFor="let s of statiOptions" [value]="s.value">{{ s.label }}</option>
           </select>
         </div>
       </div>

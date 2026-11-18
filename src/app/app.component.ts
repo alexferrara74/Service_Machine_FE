@@ -12,15 +12,25 @@ import { CommonModule } from '@angular/common';
 export class AppComponent {
   title = 'Servizi Pilot';
 
-  navItems = [
-    { path: '/attrezzature', label: '🔧 Attrezzature' },
-    { path: '/clienti', label: '👥 Clienti' },
-    { path: '/noleggi', label: '📋 Noleggi' },
-    { path: '/prodotti', label: '📦 Prodotti' },
-    { path: '/catalogo-prodotti', label: '🗂️ Catalogo ERP' },
-    { path: '/interventi', label: '🛠️ Interventi' },
-    { path: '/magazzino', label: '🏭 Magazzino' },
-    { path: '/magazzino-posizioni', label: '📍 Posizioni Magazzino' },
-    { path: '/sync', label: '🔄 Sincronizzazione' },
+  navGroups = [
+    { label: 'Parco macchine', items: [
+      { path: '/attrezzature', label: 'Attrezzature' },
+      { path: '/noleggi', label: 'Noleggi' },
+      { path: '/interventi', label: 'Interventi' },
+    ] },
+    { label: 'Anagrafiche', items: [
+      { path: '/clienti', label: 'Clienti' },
+      { path: '/prodotti', label: 'Prodotti' },
+      { path: '/catalogo-prodotti', label: 'Catalogo ERP' },
+    ] },
+    { label: 'Magazzino', items: [
+      { path: '/magazzino', label: 'Ubicazioni' },
+      { path: '/magazzino-posizioni', label: 'Posizioni articoli' },
+    ] },
+    { label: 'Sistema', items: [
+      { path: '/sync', label: 'Sincronizzazione ERP' },
+    ] },
   ];
+
+  navItems = this.navGroups.flatMap(group => group.items);
 }

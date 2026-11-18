@@ -101,7 +101,7 @@ export class ClientiDetailComponent implements OnInit {
       this.maintenancePlanConfigured = schedule !== null;
       this.maintenancePeriods = schedule?.periodi.map(period => ({ ...period })) ?? [];
     } catch (error) {
-      this.maintenanceSettingsError = this.message(error, 'Impossibile caricare i dati del cliente');
+      this.maintenanceSettingsError = errorMessage(error, 'Impossibile caricare i dati del cliente');
     } finally {
       this.maintenanceSettingsLoading = false;
     }
@@ -145,7 +145,7 @@ export class ClientiDetailComponent implements OnInit {
       this.maintenancePlanConfigured = true;
       this.maintenancePlanSaved = true;
     } catch (error) {
-      this.maintenancePlanError = this.message(error, 'Errore nel salvataggio della pianificazione manutentiva');
+      this.maintenancePlanError = errorMessage(error, 'Errore nel salvataggio della pianificazione manutentiva');
     } finally {
       this.maintenancePlanSaving = false;
     }
@@ -162,15 +162,12 @@ export class ClientiDetailComponent implements OnInit {
         this.statisticsAl || undefined
       );
     } catch (error) {
-      this.statisticsError = this.message(error, 'Errore nel caricamento delle statistiche');
+      this.statisticsError = errorMessage(error, 'Errore nel caricamento delle statistiche');
     } finally {
       this.statisticsLoading = false;
     }
   }
 
-  private message(error: unknown, fallback: string): string {
-    return error instanceof Error ? error.message : fallback;
-  }
 
   async save(): Promise<void> {
     this.saving = true;
