@@ -34,6 +34,7 @@ export class AppComponent {
     { label: 'Sistema', items: [
       { path: '/sync', label: 'Sincronizzazione ERP', adminOnly: true },
       { path: '/utenti', label: 'Utenti', adminOnly: true },
+      { path: '/registro', label: 'Registro attività', adminOnly: true },
     ] },
   ];
 

@@ -51,6 +51,7 @@ describe('AppComponent', () => {
     const found = links();
     expect(found).toContain('/sync');
     expect(found).toContain('/utenti');
+    expect(found).toContain('/registro');
     expect(found).toContain('/clienti');
   });
 
@@ -60,5 +61,6 @@ describe('AppComponent', () => {
     expect(found).toContain('/clienti');
     expect(found).not.toContain('/sync');
     expect(found).not.toContain('/utenti');
+    expect(found).not.toContain('/registro');
   });
 });

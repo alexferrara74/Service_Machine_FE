@@ -21,6 +21,7 @@ export const routes: Routes = [
       { path: 'magazzino-posizioni', loadChildren: () => import('./features/magazzino-posizioni/magazzino-posizioni.routes').then(m => m.MAGAZZINO_POSIZIONI_ROUTES) },
       { path: 'sync', canActivate: [adminGuard], loadComponent: () => import('./features/sync/sync-page.component').then(m => m.SyncPageComponent) },
       { path: 'utenti', canActivate: [adminGuard], loadComponent: () => import('./features/utenti/utenti-page.component').then(m => m.UtentiPageComponent) },
+      { path: 'registro', canActivate: [adminGuard], loadComponent: () => import('./features/registro/registro-page.component').then(m => m.RegistroPageComponent) },
       { path: 'account', loadComponent: () => import('./features/account/account-page.component').then(m => m.AccountPageComponent) }
     ]
   },
