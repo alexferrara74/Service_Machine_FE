@@ -165,4 +165,4 @@ La migrazione 20261029 non copia automaticamente piani precedenti salvati per no
 
 ## Documentazione
 
-Guida all'uso (ruoli, noleggi, calendario, utenti, registro) e all'installazione, con screenshot: [docs/GUIDA.md](docs/GUIDA.md).
+Guida all'uso (ruoli, noleggi, calendario, utenti, registro) e all'installazione, con screenshot: [docs/GUIDA.md](docs/GUIDA.md), disponibile anche in PDF: [docs/GUIDA.pdf](docs/GUIDA.pdf).
