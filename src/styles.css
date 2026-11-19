@@ -18,6 +18,17 @@
   --warn-bg: #fff3cf;
   --info: #12414a;
   --info-bg: #dcebed;
+
+  /* Stati degli appuntamenti di assistenza (calendario): colore pieno per bordo/segno, sfondo tenue per il riempimento.
+     Il testo scuro su sfondo tenue resta sopra il contrasto 4.5:1; il colore non è mai l'unico segnale (c'è anche il simbolo). */
+  --st-da-confermare: #b26a00;     /* ambra */
+  --st-da-confermare-bg: #fff0cc;
+  --st-da-fare: #1d5fa8;           /* blu */
+  --st-da-fare-bg: #dde9f7;
+  --st-fatto: #1f7a4d;             /* verde */
+  --st-fatto-bg: #e0f2e8;
+  --st-annullato: #8a3a3a;         /* rosso spento, barrato */
+  --st-annullato-bg: #ece6e6;
 }
 
 html {

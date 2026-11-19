@@ -1,0 +1,171 @@
+<div class="page">
+  <div class="page-header">
+    <div class="page-title">
+      <span class="page-icon" aria-hidden="true">📅</span>
+      <div>
+        <h1>Calendario assistenze</h1>
+        <p>Organizza le assistenze sui noleggi censiti; solo in caso eccezionale per clienti non censiti.</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="openNew(cursor)">+ Nuovo appuntamento</button>
+  </div>
+
+  <div *ngIf="error" class="error-block" role="alert">⚠️ {{ error }}</div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="nav-buttons">
+        <button type="button" class="btn btn-secondary" (click)="vai(-1)" aria-label="Periodo precedente">‹</button>
+        <button type="button" class="btn btn-secondary" (click)="oggi()">Oggi</button>
+        <button type="button" class="btn btn-secondary" (click)="vai(1)" aria-label="Periodo successivo">›</button>
+      </div>
+      <h2 class="period" aria-live="polite">{{ titolo }}</h2>
+      <div class="view-switch" role="group" aria-label="Vista calendario">
+        <button type="button" [class.active]="vista === 'mese'" [attr.aria-pressed]="vista === 'mese'" (click)="setVista('mese')">Mese</button>
+        <button type="button" [class.active]="vista === 'settimana'" [attr.aria-pressed]="vista === 'settimana'" (click)="setVista('settimana')">Settimana</button>
+      </div>
+    </div>
+
+    <!-- Legenda: ogni voce è anche un filtro (clic per nascondere/mostrare lo stato). -->
+    <div class="legend" role="group" aria-label="Legenda e filtri per stato">
+      <button *ngFor="let s of stati" type="button" class="legend-item"
+              [class.off]="nascosti.has(s.value)" [attr.aria-pressed]="!nascosti.has(s.value)"
+              (click)="toggleStato(s.value)">
+        <span class="swatch" [ngClass]="s.css"><span aria-hidden="true">{{ s.symbol }}</span></span>
+        {{ s.label }} <span class="count">{{ contaStato(s.value) }}</span>
+      </button>
+      <span class="legend-item static" title="Appuntamento di un cliente inserito a mano, non presente in anagrafica">
+        <span class="swatch nc" aria-hidden="true">NC</span> Cliente non censito
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="loading">Caricamento...</div>
+
+    <!-- Intestazione giorni -->
+    <div class="grid head" [class.week]="vista === 'settimana'" aria-hidden="true">
+      <div *ngFor="let g of giorniSettimana">{{ g }}</div>
+    </div>
+
+    <div class="grid" [class.week]="vista === 'settimana'" [class.busy]="loading">
+      <div *ngFor="let day of days" class="cell" [class.other]="!day.inMonth" [class.today]="day.isToday">
+        <div class="cell-head">
+          <button type="button" class="day-number" (click)="openNew(day.date)"
+                  [attr.aria-label]="'Nuovo appuntamento il ' + (day.date | date:'d MMMM')">{{ day.date | date:'d' }}</button>
+        </div>
+        <ng-container *ngFor="let e of day.events; let i = index">
+          <button *ngIf="vista === 'settimana' || i < maxChips" type="button" class="chip" [ngClass]="css(e)"
+                  [class.nc]="!e.censito" [title]="descrizione(e)" [attr.aria-label]="descrizione(e)"
+                  (click)="openExisting(e)">
+            <span class="chip-sym" aria-hidden="true">{{ simbolo(e) }}</span>
+            <span class="chip-time">{{ orario(e) }}</span>
+            <span class="chip-text">{{ etichetta(e) }}</span>
+          </button>
+        </ng-container>
+        <button *ngIf="vista === 'mese' && day.events.length > maxChips" type="button" class="more"
+                (click)="apriSettimana(day.date)">+{{ day.events.length - maxChips }} altri</button>
+      </div>
+    </div>
+    <p *ngIf="!loading && !error && !events.length" class="empty">Nessun appuntamento in questo periodo. Clicca su un giorno per crearne uno.</p>
+  </div>
+</div>
+
+<!-- Editor appuntamento -->
+<div *ngIf="editing" class="overlay" (mousedown)="$event.target === $event.currentTarget && closeEditor()">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <h2 id="dlg-title">{{ editingId === null ? 'Nuovo appuntamento' : 'Appuntamento' }}</h2>
+    <div *ngIf="editorError" class="error-block" role="alert">⚠️ {{ editorError }}</div>
+
+    <form (ngSubmit)="save()" autocomplete="off">
+      <fieldset class="tipo">
+        <legend>Per chi è l’assistenza</legend>
+        <label><input type="radio" name="tipo" value="censito" [(ngModel)]="form.tipo"> Noleggio censito</label>
+        <label><input type="radio" name="tipo" value="manuale" [(ngModel)]="form.tipo"> Cliente non censito <small>(eccezionale)</small></label>
+      </fieldset>
+
+      <ng-container *ngIf="form.tipo === 'censito'">
+        <div class="form-group">
+          <label for="cliente-q">Cliente</label>
+          <div *ngIf="clienteSelezionato" class="selected">
+            <strong>{{ clienteSelezionato.ragioneSociale }}</strong>
+            <button type="button" class="link" (click)="clearCliente()">cambia</button>
+          </div>
+          <ng-container *ngIf="!clienteSelezionato">
+            <input id="cliente-q" class="form-control" [(ngModel)]="clienteQuery" name="clienteQuery" placeholder="Cerca per ragione sociale o codice">
+            <ul *ngIf="suggerimentiClienti.length" class="suggest">
+              <li *ngFor="let c of suggerimentiClienti"><button type="button" (click)="selectCliente(c)">{{ c.ragioneSociale }} <small>{{ c.codice }}</small></button></li>
+            </ul>
+            <small *ngIf="clienteQuery.trim() && !suggerimentiClienti.length" class="hint">Nessun cliente trovato.</small>
+          </ng-container>
+        </div>
+        <div class="form-group" *ngIf="clienteSelezionato">
+          <label for="noleggio">Noleggio</label>
+          <select id="noleggio" class="form-control" [ngModel]="form.docId" (ngModelChange)="form.docId = $event; onNoleggioChange($event)" name="docId">
+            <option [ngValue]="null" disabled>{{ noleggiLoading ? 'Caricamento...' : 'Seleziona il noleggio' }}</option>
+            <option *ngFor="let n of noleggiCliente" [ngValue]="n.docId">{{ etichettaNoleggio(n) }}</option>
+          </select>
+          <small *ngIf="!noleggiLoading && !noleggiCliente.length" class="hint">Questo cliente non ha noleggi censiti.</small>
+          <button *ngIf="form.docId !== null && editingId !== null" type="button" class="link" (click)="vaiANoleggio()">Apri il noleggio</button>
+        </div>
+      </ng-container>
+
+      <div class="form-grid" *ngIf="form.tipo === 'manuale'">
+        <div class="form-group">
+          <label for="cn">Cliente *</label>
+          <input id="cn" class="form-control" [(ngModel)]="form.clienteNome" name="clienteNome" maxlength="255">
+        </div>
+        <div class="form-group">
+          <label for="ct">Telefono</label>
+          <input id="ct" class="form-control" [(ngModel)]="form.clienteTelefono" name="clienteTelefono" maxlength="50">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group wide">
+          <label for="tt">Titolo *</label>
+          <input id="tt" class="form-control" [(ngModel)]="form.titolo" name="titolo" maxlength="255" placeholder="Es. Revisione ordinaria">
+        </div>
+        <div class="form-group">
+          <label for="in">Inizio *</label>
+          <input id="in" class="form-control" type="datetime-local" [ngModel]="form.inizio" (ngModelChange)="onInizioChange($event)" name="inizio">
+        </div>
+        <div class="form-group">
+          <label for="fi">Fine *</label>
+          <input id="fi" class="form-control" type="datetime-local" [(ngModel)]="form.fine" name="fine">
+        </div>
+        <div class="form-group">
+          <label for="st">Stato</label>
+          <select id="st" class="form-control" [(ngModel)]="form.stato" name="stato">
+            <option *ngFor="let s of stati" [ngValue]="s.value">{{ s.symbol }} {{ s.label }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="te">Tecnico</label>
+          <input id="te" class="form-control" [(ngModel)]="form.tecnico" name="tecnico" maxlength="100">
+        </div>
+        <div class="form-group">
+          <label for="ap">Apparecchio</label>
+          <input id="ap" class="form-control" [(ngModel)]="form.apparecchio" name="apparecchio" maxlength="255">
+        </div>
+        <div class="form-group">
+          <label for="ind">Indirizzo intervento</label>
+          <input id="ind" class="form-control" [(ngModel)]="form.indirizzo" name="indirizzo" maxlength="255">
+        </div>
+        <div class="form-group wide">
+          <label for="no">Note</label>
+          <textarea id="no" class="form-control" rows="3" [(ngModel)]="form.note" name="note" maxlength="2000"></textarea>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
+        <button type="button" class="btn btn-secondary" (click)="closeEditor()" [disabled]="saving">Chiudi</button>
+        <ng-container *ngIf="editingId !== null">
+          <button *ngIf="form.stato === 'DA_CONFERMARE'" type="button" class="btn st-btn st-da-fare" [disabled]="saving" (click)="cambiaStato('DA_FARE')">● Conferma</button>
+          <button *ngIf="form.stato === 'DA_CONFERMARE' || form.stato === 'DA_FARE'" type="button" class="btn st-btn st-fatto" [disabled]="saving" (click)="cambiaStato('FATTO')">✓ Segna come fatto</button>
+          <button *ngIf="form.stato !== 'ANNULLATO'" type="button" class="btn st-btn st-annullato" [disabled]="saving" (click)="cambiaStato('ANNULLATO')">✕ Annulla appuntamento</button>
+          <button type="button" class="btn btn-danger push" [disabled]="saving" (click)="remove()">Elimina</button>
+        </ng-container>
+      </div>
+    </form>
+  </div>
+</div>

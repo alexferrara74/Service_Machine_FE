@@ -10,6 +10,7 @@ export const routes: Routes = [
   { path: 'storia-noleggi', redirectTo: 'noleggi' },
   { path: 'storia-prodotti', redirectTo: 'prodotti' },
   { path: 'interventi', loadChildren: () => import('./features/interventi/interventi.routes').then(m => m.INTERVENTI_ROUTES) },
+  { path: 'calendario', loadComponent: () => import('./features/calendario/calendario-page.component').then(m => m.CalendarioPageComponent) },
   { path: 'magazzino', loadChildren: () => import('./features/magazzino/magazzino.routes').then(m => m.MAGAZZINO_ROUTES) },
   { path: 'magazzino-posizioni', loadChildren: () => import('./features/magazzino-posizioni/magazzino-posizioni.routes').then(m => m.MAGAZZINO_POSIZIONI_ROUTES) },
   { path: 'sync', loadComponent: () => import('./features/sync/sync-page.component').then(m => m.SyncPageComponent) },

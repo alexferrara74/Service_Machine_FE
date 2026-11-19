@@ -7,6 +7,9 @@ export { RequestBuilder } from './request-builder';
 export type { StrictHttpResponse } from './strict-http-response';
 export { Api } from './api';
 
+export type { AppuntamentoRequest } from './models/appuntamento-request';
+export type { AppuntamentoResponse } from './models/appuntamento-response';
+export type { AppuntamentoStatoRequest } from './models/appuntamento-stato-request';
 export type { AttrezzaturaRequest } from './models/attrezzatura-request';
 export type { AttrezzaturaResponse } from './models/attrezzatura-response';
 export type { ClienteRequest } from './models/cliente-request';
@@ -53,6 +56,7 @@ export { InterventiService } from './services/interventi.service';
 export { ClientiService } from './services/clienti.service';
 export { AttrezzatureService } from './services/attrezzature.service';
 export { SyncService } from './services/sync.service';
+export { AppuntamentiService } from './services/appuntamenti.service';
 
 export type { GetById$Params as GetById$Params } from './fn/storia-prodotti/get-by-id';
 export { getById as getById } from './fn/storia-prodotti/get-by-id';
@@ -158,3 +162,17 @@ export type { GetByMarca$Params as GetByMarca$Params } from './fn/attrezzature/g
 export { getByMarca as getByMarca } from './fn/attrezzature/get-by-marca';
 export type { SyncIntervento$Params as SyncIntervento$Params } from './fn/sync/sync-intervento';
 export { syncIntervento as syncIntervento } from './fn/sync/sync-intervento';
+export type { GetById7$Params as GetById7$Params } from './fn/appuntamenti/get-by-id-7';
+export { getById7 as getById7 } from './fn/appuntamenti/get-by-id-7';
+export type { Update7$Params as Update7$Params } from './fn/appuntamenti/update-7';
+export { update7 as update7 } from './fn/appuntamenti/update-7';
+export type { Delete7$Params as Delete7$Params } from './fn/appuntamenti/delete-7';
+export { delete7 as delete7 } from './fn/appuntamenti/delete-7';
+export type { GetByIntervallo$Params as GetByIntervallo$Params } from './fn/appuntamenti/get-by-intervallo';
+export { getByIntervallo as getByIntervallo } from './fn/appuntamenti/get-by-intervallo';
+export type { Create7$Params as Create7$Params } from './fn/appuntamenti/create-7';
+export { create7 as create7 } from './fn/appuntamenti/create-7';
+export type { GetByNoleggio$Params as GetByNoleggio$Params } from './fn/appuntamenti/get-by-noleggio';
+export { getByNoleggio as getByNoleggio } from './fn/appuntamenti/get-by-noleggio';
+export type { UpdateStato$Params as UpdateStato$Params } from './fn/appuntamenti/update-stato';
+export { updateStato as updateStato } from './fn/appuntamenti/update-stato';

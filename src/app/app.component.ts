@@ -17,6 +17,7 @@ export class AppComponent {
       { path: '/attrezzature', label: 'Attrezzature' },
       { path: '/noleggi', label: 'Noleggi' },
       { path: '/interventi', label: 'Interventi' },
+      { path: '/calendario', label: 'Calendario assistenze' },
     ] },
     { label: 'Anagrafiche', items: [
       { path: '/clienti', label: 'Clienti' },

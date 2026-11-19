@@ -25,6 +25,7 @@ import { errorMessage } from '../../shared/error-message';
     <h1>{{ isNew ? '+ Nuovo Noleggio' : '✏️ Modifica Noleggio' }}</h1>
     <div class="header-actions">
       <button class="btn btn-secondary" (click)="goBack()">← Indietro</button>
+      <button *ngIf="!isNew" class="btn btn-secondary" (click)="planAssistance()">📅 Pianifica assistenza</button>
       <button *ngIf="!isNew" class="btn btn-danger" (click)="deleteItem()">🗑️ Elimina</button>
     </div>
   </div>
@@ -172,6 +173,10 @@ export class StoriaNoleggioDetailComponent implements OnInit {
     dataDoc: '',
     sezionale: ''
   };
+
+  planAssistance(): void {
+    if (this.id !== null) this.router.navigate(['/calendario'], { queryParams: { docId: this.id } });
+  }
 
   constructor(
     private service: StoriaNoleggiService,

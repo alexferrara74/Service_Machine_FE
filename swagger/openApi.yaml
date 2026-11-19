@@ -1380,6 +1380,160 @@ paths:
       responses:
         '204':
           description: No Content
+  /api/appuntamenti/{id}:
+    get:
+      tags:
+      - Appuntamenti
+      summary: Dettaglio appuntamento
+      operationId: getById_7
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppuntamentoResponse'
+    put:
+      tags:
+      - Appuntamenti
+      summary: Aggiorna un appuntamento
+      operationId: update_7
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppuntamentoRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppuntamentoResponse'
+    delete:
+      tags:
+      - Appuntamenti
+      summary: Elimina un appuntamento
+      operationId: delete_7
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: No Content
+  /api/appuntamenti:
+    get:
+      tags:
+      - Appuntamenti
+      summary: Appuntamenti nell'intervallo [da, a) per il calendario
+      operationId: getByIntervallo
+      parameters:
+      - name: da
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: a
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppuntamentoResponse'
+    post:
+      tags:
+      - Appuntamenti
+      summary: Crea un appuntamento
+      operationId: create_7
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppuntamentoRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppuntamentoResponse'
+  /api/appuntamenti/{id}/stato:
+    patch:
+      tags:
+      - Appuntamenti
+      summary: Cambia lo stato (da confermare, da fare, fatto, annullato)
+      operationId: updateStato
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppuntamentoStatoRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppuntamentoResponse'
+  /api/appuntamenti/noleggio/{docId}:
+    get:
+      tags:
+      - Appuntamenti
+      summary: Appuntamenti di un noleggio censito
+      operationId: getByNoleggio
+      parameters:
+      - name: docId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppuntamentoResponse'
 components:
   schemas:
     StoriaProdottoRequest:
@@ -2165,3 +2319,110 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RicambioResponse'
+    AppuntamentoRequest:
+      required:
+      - fine
+      - inizio
+      - stato
+      - titolo
+      type: object
+      properties:
+        docId:
+          type: integer
+          format: int32
+        clienteNome:
+          maxLength: 255
+          minLength: 0
+          type: string
+        clienteTelefono:
+          maxLength: 50
+          minLength: 0
+          type: string
+        indirizzo:
+          maxLength: 255
+          minLength: 0
+          type: string
+        apparecchio:
+          maxLength: 255
+          minLength: 0
+          type: string
+        titolo:
+          maxLength: 255
+          minLength: 0
+          type: string
+        note:
+          maxLength: 2000
+          minLength: 0
+          type: string
+        stato:
+          type: string
+          enum:
+          - DA_CONFERMARE
+          - DA_FARE
+          - FATTO
+          - ANNULLATO
+        inizio:
+          type: string
+          format: date-time
+        fine:
+          type: string
+          format: date-time
+        tecnico:
+          maxLength: 100
+          minLength: 0
+          type: string
+    AppuntamentoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        docId:
+          type: integer
+          format: int32
+        censito:
+          type: boolean
+        clienteId:
+          type: integer
+          format: int64
+        cliente:
+          type: string
+        clienteTelefono:
+          type: string
+        indirizzo:
+          type: string
+        matricola:
+          type: string
+        apparecchio:
+          type: string
+        titolo:
+          type: string
+        note:
+          type: string
+        stato:
+          type: string
+          enum:
+          - DA_CONFERMARE
+          - DA_FARE
+          - FATTO
+          - ANNULLATO
+        inizio:
+          type: string
+          format: date-time
+        fine:
+          type: string
+          format: date-time
+        tecnico:
+          type: string
+    AppuntamentoStatoRequest:
+      required:
+      - stato
+      type: object
+      properties:
+        stato:
+          type: string
+          enum:
+          - DA_CONFERMARE
+          - DA_FARE
+          - FATTO
+          - ANNULLATO

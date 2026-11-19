@@ -11,3 +11,4 @@ export { InterventiService } from './services/interventi.service';
 export { ClientiService } from './services/clienti.service';
 export { AttrezzatureService } from './services/attrezzature.service';
 export { SyncService } from './services/sync.service';
+export { AppuntamentiService } from './services/appuntamenti.service';
