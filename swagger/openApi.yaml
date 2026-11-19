@@ -1486,6 +1486,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppuntamentoResponse'
+  /api/appuntamenti/export:
+    get:
+      tags:
+        - Appuntamenti
+      summary: "Esporta in Excel (xlsx) o PDF gli appuntamenti dell'intervallo [da, a): giorno, settimana o mese"
+      operationId: esporta
+      parameters:
+        - name: da
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: a
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: formato
+          in: query
+          required: false
+          schema:
+            type: string
+            default: xlsx
+        - name: stati
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - DA_CONFERMARE
+                - DA_FARE
+                - FATTO
+                - ANNULLATO
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: byte
   /api/appuntamenti/{id}/stato:
     patch:
       tags:

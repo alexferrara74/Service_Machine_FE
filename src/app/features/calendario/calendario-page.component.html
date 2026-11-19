@@ -7,12 +7,41 @@
         <p>Organizza le assistenze sui noleggi censiti; solo in caso eccezionale per clienti non censiti.</p>
       </div>
     </div>
-    <button class="btn btn-primary" (click)="openNew(cursor)">+ Nuovo appuntamento</button>
+    <div class="header-actions">
+      <button class="btn btn-secondary" type="button" [attr.aria-expanded]="exportOpen" (click)="toggleExport()">⬇ Esporta</button>
+      <button class="btn btn-primary" (click)="openNew(cursor)">+ Nuovo appuntamento</button>
+    </div>
   </div>
 
   <div *ngIf="error" class="error-block" role="alert">⚠️ {{ error }}</div>
 
   <div class="card">
+    <section *ngIf="exportOpen" class="export-panel" aria-label="Esporta appuntamenti">
+      <div class="form-group">
+        <label for="ex-p">Periodo</label>
+        <select id="ex-p" class="form-control" [(ngModel)]="exportPeriodo" name="exportPeriodo">
+          <option value="giorno">Giornaliero</option>
+          <option value="settimana">Settimanale</option>
+          <option value="mese">Mensile</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="ex-d">Giorno di riferimento</label>
+        <input id="ex-d" class="form-control" type="date" [(ngModel)]="exportGiorno" name="exportGiorno">
+      </div>
+      <div class="export-actions">
+        <button type="button" class="btn btn-primary" [disabled]="!exportGiorno || exporting !== null" (click)="esporta('xlsx')">
+          {{ exporting === 'xlsx' ? 'Generazione...' : 'Excel (.xlsx)' }}</button>
+        <button type="button" class="btn btn-secondary" [disabled]="!exportGiorno || exporting !== null" (click)="esporta('pdf')">
+          {{ exporting === 'pdf' ? 'Generazione...' : 'PDF' }}</button>
+      </div>
+      <p class="export-info">
+        <strong>{{ exportRiepilogo }}</strong>
+        <span *ngIf="nascosti.size"> · esclusi gli stati nascosti nella legenda</span>
+      </p>
+      <p *ngIf="exportError" class="error-block" role="alert">⚠️ {{ exportError }}</p>
+    </section>
+
     <div class="toolbar">
       <div class="nav-buttons">
         <button type="button" class="btn btn-secondary" (click)="vai(-1)" aria-label="Periodo precedente">‹</button>

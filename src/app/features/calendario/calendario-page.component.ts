@@ -11,6 +11,7 @@ import { ClienteResponse } from '../../api/models/cliente-response';
 import { StoriaNoleggioResponse } from '../../api/models/storia-noleggio-response';
 import { errorMessage } from '../../shared/error-message';
 import { STATI_APPUNTAMENTO, StatoAppuntamento, statoAppuntamento } from '../../shared/stati-appuntamento';
+import { AppuntamentiExportService, FormatoExport, PeriodoExport } from './appuntamenti-export.service';
 import { addDays, dayKey, parseLocal, startOfDay, startOfWeek, timeOf, toLocalDateTime } from '../../shared/calendar-dates';
 
 type Vista = 'mese' | 'settimana';
@@ -61,6 +62,13 @@ export class CalendarioPageComponent implements OnInit {
   loading = false;
   error = '';
 
+  // --- export ---
+  exportOpen = false;
+  exportPeriodo: PeriodoExport = 'mese';
+  exportGiorno = '';           // yyyy-MM-dd
+  exporting: FormatoExport | null = null;
+  exportError = '';
+
   // --- editor ---
   editing = false;
   editingId: number | null = null;
@@ -80,7 +88,8 @@ export class CalendarioPageComponent implements OnInit {
     private clientiService: ClientiService,
     private noleggiService: StoriaNoleggiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private exporter: AppuntamentiExportService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -202,6 +211,43 @@ export class CalendarioPageComponent implements OnInit {
     const dove = e.matricola ? ` · matricola ${e.matricola}` : '';
     const nc = e.censito ? '' : ' · cliente non censito';
     return `${stato}, ${quando}: ${this.etichetta(e)}${dove}${nc}`;
+  }
+
+  // ---------- export ----------
+
+  toggleExport(): void {
+    this.exportOpen = !this.exportOpen;
+    if (!this.exportOpen) return;
+    this.exportError = '';
+    this.exportPeriodo = this.vista === 'settimana' ? 'settimana' : 'mese';
+    // Oggi se rientra nel periodo mostrato, altrimenti il periodo mostrato.
+    const { start, end } = this.range();
+    const oggi = startOfDay(new Date());
+    this.exportGiorno = dayKey(oggi >= start && oggi < end ? oggi : this.vista === 'mese' ? new Date(this.cursor.getFullYear(), this.cursor.getMonth(), 15) : this.cursor);
+  }
+
+  /** Testo "dal … al …" del periodo scelto, mostrato sopra i pulsanti per evitare esportazioni sbagliate. */
+  get exportRiepilogo(): string {
+    if (!this.exportGiorno) return '';
+    const { start, end } = this.exporter.intervallo(this.exportPeriodo, parseLocal(this.exportGiorno));
+    const fmt = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+    const ultimo = addDays(end, -1);
+    return this.exportPeriodo === 'giorno' ? fmt.format(start) : `dal ${fmt.format(start)} al ${fmt.format(ultimo)}`;
+  }
+
+  async esporta(formato: FormatoExport): Promise<void> {
+    if (!this.exportGiorno || this.exporting) return;
+    this.exporting = formato;
+    this.exportError = '';
+    // Rispetta i filtri della legenda: gli stati nascosti non finiscono nel file.
+    const stati = this.nascosti.size ? this.stati.map(s => s.value).filter(s => !this.nascosti.has(s)) : undefined;
+    try {
+      await this.exporter.scarica(this.exportPeriodo, parseLocal(this.exportGiorno), formato, stati);
+    } catch (error) {
+      this.exportError = (error as Error).message;
+    } finally {
+      this.exporting = null;
+    }
   }
 
   // ---------- editor ----------

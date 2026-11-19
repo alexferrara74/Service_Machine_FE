@@ -1,4 +1,5 @@
 .page-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .page-title { display: flex; align-items: center; gap: 12px; }
 .page-title h1 { font-size: 22px; font-weight: 700; color: var(--ink); }
 .page-title p { color: var(--muted); }
@@ -87,3 +88,10 @@
   .card { overflow-x: auto; }
   .form-grid { grid-template-columns: 1fr; }
 }
+
+/* ---- export ---- */
+.export-panel { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; margin-bottom: 16px; padding: 14px; background: var(--info-bg); border-radius: 8px; }
+.export-panel .form-group { margin: 0; min-width: 180px; }
+.export-actions { display: flex; gap: 8px; }
+.export-info { flex-basis: 100%; color: var(--ink); }
+.export-panel .error-block { flex-basis: 100%; margin: 0; }
