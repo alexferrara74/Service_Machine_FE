@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
+import { AdminOnlyDirective } from '../../core/admin-only.directive';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,15 +15,15 @@ import { errorMessage } from '../../shared/error-message';
 @Component({
   selector: 'app-storia-prodotti-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, AdminOnlyDirective],
   template: `
     <section class="page">
-      <header class="page-header"><h1>Prodotti</h1><button class="btn btn-primary" (click)="create()">+ Nuova registrazione</button></header>
+      <header class="page-header"><h1>Prodotti</h1><button appAdmin class="btn btn-primary" (click)="create()">+ Nuova registrazione</button></header>
       <div *ngIf="error" class="error-block">{{ error }}</div>
       <div *ngIf="customersError" class="warning-block">{{ customersError }}</div>
       <section *ngIf="editing" class="card">
         <h2>{{ isNew ? 'Nuova registrazione prodotto' : 'Modifica registrazione' }}</h2>
-        <form (ngSubmit)="save()" class="form-grid">
+        <form (ngSubmit)="save()"><fieldset class="lock form-grid" [disabled]="!auth.isAdmin()">
           <label>Codice articolo<input class="form-control" [(ngModel)]="form.codiceArticolo" name="codice" required></label>
           <label>Articolo ID<input class="form-control" type="number" [(ngModel)]="form.articoloId" name="articolo"></label>
           <label>Cliente
@@ -38,10 +40,10 @@ import { errorMessage } from '../../shared/error-message';
           <label>Descrizione<input class="form-control" [(ngModel)]="form.descrizione" name="descrizione"></label>
           <label>Quantità<input class="form-control" type="number" [(ngModel)]="form.quantita" name="quantita" required></label>
           <label>Data documento<input class="form-control" type="date" [(ngModel)]="form.dataDoc" name="dataDoc"></label>
-          <div class="form-actions">
-            <button class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
+          </fieldset><div class="form-actions">
+            <button appAdmin class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
             <button type="button" class="btn btn-secondary" (click)="back()">Indietro</button>
-            <button *ngIf="!isNew" type="button" class="btn btn-danger" (click)="remove()">Elimina</button>
+            <button appAdmin *ngIf="!isNew" type="button" class="btn btn-danger" (click)="remove()">Elimina</button>
           </div>
         </form>
       </section>
@@ -85,6 +87,7 @@ import { errorMessage } from '../../shared/error-message';
   styles: [`.page-header,.form-actions,.filter-row{display:flex;align-items:end;gap:12px;justify-content:space-between;flex-wrap:wrap}.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.form-grid label,.filter-row label{display:grid;gap:6px}.card{margin-bottom:20px;padding:20px;background:var(--surface);border-radius:12px;box-shadow:0 2px 8px #00000012}.form-control{padding:9px;border:1px solid var(--field);border-radius:6px}.data-table{width:100%;border-collapse:collapse;margin:16px 0}.data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid var(--line)}.data-table small{display:block;margin-top:4px;color:var(--muted);font-size:11px}.error-block{margin:12px 0;padding:10px;background:var(--danger-bg);color:var(--danger)}.warning-block{margin:12px 0;padding:10px;background:var(--warn-bg);color:var(--warn);border-radius:6px}.btn{padding:8px 12px;border:0;border-radius:6px;cursor:pointer}.btn-primary{background:var(--petrol);color:white}.btn-secondary{background:var(--line)}.btn-secondary:disabled{opacity:.5;cursor:not-allowed}.btn-danger{background:var(--danger);color:white}.loading{padding:20px;text-align:center}`]
 })
 export class StoriaProdottiPageComponent implements OnInit {
+  readonly auth = inject(AuthService);
   items: StoriaProdottoResponse[] = [];
   loading = false;
   saving = false;

@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
+import { AdminOnlyDirective } from '../../core/admin-only.directive';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -21,7 +23,7 @@ import { AttrezzaturaCreata, AttrezzaturaQuickCreateComponent } from './attrezza
 @Component({
   selector: 'app-storia-noleggi-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, ClienteQuickCreateComponent, AttrezzaturaQuickCreateComponent],
+  imports: [CommonModule, FormsModule, ClienteQuickCreateComponent, AttrezzaturaQuickCreateComponent, AdminOnlyDirective],
   template: `
 <div class="page">
   <div class="page-header">
@@ -29,13 +31,13 @@ import { AttrezzaturaCreata, AttrezzaturaQuickCreateComponent } from './attrezza
     <div class="header-actions">
       <button class="btn btn-secondary" (click)="goBack()">← Indietro</button>
       <button *ngIf="!isNew" class="btn btn-secondary" (click)="planAssistance()">📅 Pianifica assistenza</button>
-      <button *ngIf="!isNew" class="btn btn-danger" (click)="deleteItem()">🗑️ Elimina</button>
+      <button appAdmin *ngIf="!isNew" class="btn btn-danger" (click)="deleteItem()">🗑️ Elimina</button>
     </div>
   </div>
   <div class="card">
     <div *ngIf="loading" class="loading">⏳ Caricamento...</div>
     <div *ngIf="error" class="error-block">⚠️ {{ error }}</div>
-    <form *ngIf="!loading" (ngSubmit)="save()">
+    <form *ngIf="!loading" (ngSubmit)="save()"><fieldset class="lock" [disabled]="!auth.isAdmin()">
       <div class="form-grid">
         <div class="form-group" *ngIf="!isNew">
           <label>Doc ID</label>
@@ -91,8 +93,8 @@ import { AttrezzaturaCreata, AttrezzaturaQuickCreateComponent } from './attrezza
         </div>
       </div>
       <div *ngIf="articleError" class="article-warning">⚠️ {{ articleError }}</div>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary" [disabled]="saving">
+      </fieldset><div class="form-actions">
+        <button appAdmin type="submit" class="btn btn-primary" [disabled]="saving">
           {{ saving ? 'Salvataggio...' : '💾 Salva' }}
         </button>
       </div>
@@ -103,13 +105,13 @@ import { AttrezzaturaCreata, AttrezzaturaQuickCreateComponent } from './attrezza
       <p *ngIf="documentName">Documento attuale: <strong>{{ documentName }}</strong></p>
       <p *ngIf="!documentName && !documentLoading">Nessun documento caricato.</p>
       <p *ngIf="documentLoading">Verifica documento in corso...</p>
-      <label class="document-picker">
+      <label appAdmin class="document-picker">
         Carica un PDF (massimo 20 MB)
         <input #documentInput type="file" accept=".pdf,application/pdf" (change)="selectDocument($event)" />
       </label>
       <p *ngIf="documentFile" class="document-selection">{{ documentFile.name }}</p>
       <div class="document-actions">
-        <button *ngIf="!isNew" type="button" class="btn btn-primary" [disabled]="!documentFile || documentUploading" (click)="uploadDocument(documentInput)">
+        <button appAdmin *ngIf="!isNew" type="button" class="btn btn-primary" [disabled]="!documentFile || documentUploading" (click)="uploadDocument(documentInput)">
           {{ documentUploading ? 'Caricamento...' : documentName ? 'Sostituisci PDF' : 'Carica PDF' }}
         </button>
         <button *ngIf="documentName" type="button" class="btn btn-secondary" [disabled]="documentDownloading" (click)="downloadDocument()">
@@ -146,6 +148,7 @@ import { AttrezzaturaCreata, AttrezzaturaQuickCreateComponent } from './attrezza
 `]
 })
 export class StoriaNoleggioDetailComponent implements OnInit {
+  readonly auth = inject(AuthService);
   isNew = false;
   loading = false;
   saving = false;

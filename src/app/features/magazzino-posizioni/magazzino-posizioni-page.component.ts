@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
+import { AdminOnlyDirective } from '../../core/admin-only.directive';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,24 +13,24 @@ import { errorMessage } from '../../shared/error-message';
 @Component({
   selector: 'app-magazzino-posizioni-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, AdminOnlyDirective],
   template: `
     <section class="page">
       <header class="page-header">
         <h1>Posizioni articoli</h1>
-        <button type="button" class="btn btn-primary" (click)="create()">+ Nuova posizione</button>
+        <button appAdmin type="button" class="btn btn-primary" (click)="create()">+ Nuova posizione</button>
       </header>
       <div *ngIf="error" class="error-block">{{ error }}</div>
       <section *ngIf="editing" class="card">
         <h2>{{ isNew ? 'Nuova posizione' : 'Modifica posizione' }}</h2>
-        <form (ngSubmit)="save()" class="form-grid">
+        <form (ngSubmit)="save()"><fieldset class="lock form-grid" [disabled]="!auth.isAdmin()">
           <label>Articolo ID<input class="form-control" type="number" [(ngModel)]="form.articoloId" name="articolo" required></label>
           <label>Ubicazione ID<input class="form-control" type="number" [(ngModel)]="form.ubicazioneId" name="ubicazione" required></label>
           <label>Quantità presente<input class="form-control" type="number" [(ngModel)]="form.quantitaPresente" name="quantita" required></label>
-          <div class="form-actions">
-            <button class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
+          </fieldset><div class="form-actions">
+            <button appAdmin class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
             <button type="button" class="btn btn-secondary" (click)="back()">Indietro</button>
-            <button *ngIf="!isNew" type="button" class="btn btn-danger" (click)="remove()">Elimina</button>
+            <button appAdmin *ngIf="!isNew" type="button" class="btn btn-danger" (click)="remove()">Elimina</button>
           </div>
         </form>
       </section>
@@ -54,7 +56,7 @@ import { errorMessage } from '../../shared/error-message';
             <thead><tr><th>ID</th><th>Articolo</th><th>Ubicazione</th><th>Codice ubicazione</th><th>Quantità</th><th></th></tr></thead>
             <tbody><tr *ngFor="let item of paginatedItems">
               <td>{{ item.id }}</td><td>{{ item.articoloId }}</td><td>{{ item.ubicazioneId }}</td><td>{{ item.codiceUbicazione }}</td><td>{{ item.quantitaPresente }}</td>
-              <td><button type="button" class="btn btn-secondary" (click)="edit(item)">Modifica</button></td>
+              <td><button type="button" class="btn btn-secondary" (click)="edit(item)">{{ auth.isAdmin() ? 'Modifica' : 'Apri' }}</button></td>
             </tr></tbody>
           </table>
         </div>
@@ -101,6 +103,7 @@ import { errorMessage } from '../../shared/error-message';
   `]
 })
 export class MagazzinoPosizioniPageComponent implements OnInit {
+  readonly auth = inject(AuthService);
   items: PosizioneArticoloResponse[] = [];
   loading = false;
   saving = false;

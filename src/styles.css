@@ -82,3 +82,19 @@ table { font-variant-numeric: tabular-nums; }
 @media (max-width: 800px) {
   .card { overflow-x: auto; }
 }
+
+/* Form di modifica visti da un viewer: i campi (fieldset disabilitato) restano leggibili ma non modificabili. */
+fieldset.lock {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+fieldset.lock:disabled input,
+fieldset.lock:disabled select,
+fieldset.lock:disabled textarea {
+  background: var(--paper-2);
+  color: var(--ink);
+  cursor: default;
+}

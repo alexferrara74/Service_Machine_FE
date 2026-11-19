@@ -3,7 +3,7 @@
     <h1>{{ isNew ? '+ Nuova Attrezzatura' : '✏️ Modifica Attrezzatura' }}</h1>
     <div class="header-actions">
       <button class="btn btn-secondary" (click)="goBack()">← Indietro</button>
-      <button *ngIf="!isNew" class="btn btn-danger" (click)="deleteItem()">🗑️ Elimina</button>
+      <button appAdmin *ngIf="!isNew" class="btn btn-danger" (click)="deleteItem()">🗑️ Elimina</button>
     </div>
   </div>
 
@@ -11,7 +11,7 @@
     <div *ngIf="loading" class="loading">⏳ Caricamento...</div>
     <div *ngIf="error" class="error-block">⚠️ {{ error }}</div>
 
-    <form *ngIf="!loading" (ngSubmit)="save()">
+    <form *ngIf="!loading" (ngSubmit)="save()"><fieldset class="lock" [disabled]="!auth.isAdmin()">
       <div class="form-grid">
         <div class="form-group">
           <label>Matricola</label>
@@ -36,8 +36,8 @@
           </select>
         </div>
       </div>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary" [disabled]="saving">
+      </fieldset><div class="form-actions">
+        <button appAdmin type="submit" class="btn btn-primary" [disabled]="saving">
           {{ saving ? 'Salvataggio...' : '💾 Salva' }}
         </button>
       </div>

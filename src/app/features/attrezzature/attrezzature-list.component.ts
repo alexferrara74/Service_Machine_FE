@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
+import { AdminOnlyDirective } from '../../core/admin-only.directive';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -11,11 +13,12 @@ import { STATI_ATTREZZATURA, statoLabel } from '../../shared/stati-attrezzatura'
 @Component({
   selector: 'app-attrezzature-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, AdminOnlyDirective],
   templateUrl: './attrezzature-list.component.html',
   styleUrl: './attrezzature-list.component.css'
 })
 export class AttrezzatureListComponent implements OnInit {
+  readonly auth = inject(AuthService);
   items: AttrezzaturaResponse[] = [];
   filtered: AttrezzaturaResponse[] = [];
   loading = false;

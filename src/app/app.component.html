@@ -1,11 +1,11 @@
-<div class="shell">
+<div class="shell" *ngIf="auth.sessione(); else bare">
   <aside class="sidebar">
     <div class="sidebar-header">
       <span class="plate" aria-hidden="true">SP</span>
       <span class="brand">Servizi Pilot</span>
     </div>
     <nav class="sidebar-nav" aria-label="Sezioni">
-      <div class="nav-group" *ngFor="let group of navGroups">
+      <div class="nav-group" *ngFor="let group of navGroups()">
         <span class="nav-group-label">{{ group.label }}</span>
         <a
           *ngFor="let item of group.items"
@@ -17,8 +17,17 @@
         </a>
       </div>
     </nav>
+    <div class="sidebar-user">
+      <div class="who">
+        <span class="name">{{ auth.username() }}</span>
+        <span class="role" [class.admin]="auth.isAdmin()">{{ auth.isAdmin() ? 'Amministratore' : 'Sola lettura' }}</span>
+      </div>
+      <a routerLink="/account" class="user-link">Il mio account</a>
+      <button type="button" class="user-link" (click)="auth.logout()">Esci</button>
+    </div>
   </aside>
   <main class="main-content">
     <router-outlet></router-outlet>
   </main>
 </div>
+<ng-template #bare><router-outlet></router-outlet></ng-template>

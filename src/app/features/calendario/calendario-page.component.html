@@ -9,7 +9,7 @@
     </div>
     <div class="header-actions">
       <button class="btn btn-secondary" type="button" [attr.aria-expanded]="exportOpen" (click)="toggleExport()">⬇ Esporta</button>
-      <button class="btn btn-primary" (click)="openNew(cursor)">+ Nuovo appuntamento</button>
+      <button appAdmin class="btn btn-primary" (click)="openNew(cursor)">+ Nuovo appuntamento</button>
     </div>
   </div>
 
@@ -78,7 +78,7 @@
     <div class="grid" [class.week]="vista === 'settimana'" [class.busy]="loading">
       <div *ngFor="let day of days" class="cell" [class.other]="!day.inMonth" [class.today]="day.isToday">
         <div class="cell-head">
-          <button type="button" class="day-number" (click)="openNew(day.date)"
+          <button type="button" class="day-number" [disabled]="!auth.isAdmin()" (click)="openNew(day.date)"
                   [attr.aria-label]="'Nuovo appuntamento il ' + (day.date | date:'d MMMM')">{{ day.date | date:'d' }}</button>
         </div>
         <ng-container *ngFor="let e of day.events; let i = index">
@@ -104,7 +104,7 @@
     <h2 id="dlg-title">{{ editingId === null ? 'Nuovo appuntamento' : 'Appuntamento' }}</h2>
     <div *ngIf="editorError" class="error-block" role="alert">⚠️ {{ editorError }}</div>
 
-    <form (ngSubmit)="save()" autocomplete="off">
+    <form (ngSubmit)="save()" autocomplete="off"><fieldset class="lock" [disabled]="!auth.isAdmin()">
       <fieldset class="tipo">
         <legend>Per chi è l’assistenza</legend>
         <label><input type="radio" name="tipo" value="censito" [(ngModel)]="form.tipo"> Noleggio censito</label>
@@ -184,15 +184,16 @@
           <textarea id="no" class="form-control" rows="3" [(ngModel)]="form.note" name="note" maxlength="2000"></textarea>
         </div>
       </div>
+      </fieldset>
 
       <div class="dialog-actions">
-        <button class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
+        <button appAdmin class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
         <button type="button" class="btn btn-secondary" (click)="closeEditor()" [disabled]="saving">Chiudi</button>
         <ng-container *ngIf="editingId !== null">
-          <button *ngIf="form.stato === 'DA_CONFERMARE'" type="button" class="btn st-btn st-da-fare" [disabled]="saving" (click)="cambiaStato('DA_FARE')">● Conferma</button>
-          <button *ngIf="form.stato === 'DA_CONFERMARE' || form.stato === 'DA_FARE'" type="button" class="btn st-btn st-fatto" [disabled]="saving" (click)="cambiaStato('FATTO')">✓ Segna come fatto</button>
-          <button *ngIf="form.stato !== 'ANNULLATO'" type="button" class="btn st-btn st-annullato" [disabled]="saving" (click)="cambiaStato('ANNULLATO')">✕ Annulla appuntamento</button>
-          <button type="button" class="btn btn-danger push" [disabled]="saving" (click)="remove()">Elimina</button>
+          <button appAdmin *ngIf="form.stato === 'DA_CONFERMARE'" type="button" class="btn st-btn st-da-fare" [disabled]="saving" (click)="cambiaStato('DA_FARE')">● Conferma</button>
+          <button appAdmin *ngIf="form.stato === 'DA_CONFERMARE' || form.stato === 'DA_FARE'" type="button" class="btn st-btn st-fatto" [disabled]="saving" (click)="cambiaStato('FATTO')">✓ Segna come fatto</button>
+          <button appAdmin *ngIf="form.stato !== 'ANNULLATO'" type="button" class="btn st-btn st-annullato" [disabled]="saving" (click)="cambiaStato('ANNULLATO')">✕ Annulla appuntamento</button>
+          <button appAdmin type="button" class="btn btn-danger push" [disabled]="saving" (click)="remove()">Elimina</button>
         </ng-container>
       </div>
     </form>

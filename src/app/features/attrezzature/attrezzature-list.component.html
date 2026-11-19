@@ -1,7 +1,7 @@
 <div class="page">
   <div class="page-header">
     <h1>🔧 Attrezzature</h1>
-    <button class="btn btn-primary" (click)="create()">+ Nuovo</button>
+    <button appAdmin class="btn btn-primary" (click)="create()">+ Nuovo</button>
   </div>
 
   <div class="card">
@@ -60,8 +60,8 @@
             <td>{{ item.modello }}</td>
             <td><span class="badge" [class]="'badge-' + (item.stato ?? '')">{{ statoLabel(item.stato) }}</span></td>
             <td class="actions">
-              <button class="btn btn-sm btn-secondary" (click)="edit(item)">✏️ Modifica</button>
-              <button class="btn btn-sm btn-danger" (click)="deleteItem(item)">🗑️ Elimina</button>
+              <button class="btn btn-sm btn-secondary" (click)="edit(item)">{{ auth.isAdmin() ? '✏️ Modifica' : '👁 Apri' }}</button>
+              <button appAdmin class="btn btn-sm btn-danger" (click)="deleteItem(item)">🗑️ Elimina</button>
             </td>
           </tr>
         </tbody>

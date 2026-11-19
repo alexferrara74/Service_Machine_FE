@@ -165,3 +165,28 @@
     padding: 16px;
   }
 }
+
+/* ---- utente collegato (in fondo alla sidebar) ---- */
+.sidebar-nav { flex: 1; }
+.sidebar-user {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.sidebar-user .who { display: flex; flex-direction: column; gap: 2px; color: #fff; }
+.sidebar-user .name { font-weight: 600; word-break: break-all; }
+.sidebar-user .role { font-size: 12px; color: #8fb0b5; }
+.sidebar-user .role.admin { color: var(--signal); }
+.user-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #dbe8ea;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}

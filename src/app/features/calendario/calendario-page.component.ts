@@ -1,4 +1,6 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
+import { AdminOnlyDirective } from '../../core/admin-only.directive';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -45,11 +47,12 @@ const MAX_CHIPS_PER_DAY = 3;
 @Component({
   selector: 'app-calendario-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminOnlyDirective],
   templateUrl: './calendario-page.component.html',
   styleUrl: './calendario-page.component.css'
 })
 export class CalendarioPageComponent implements OnInit {
+  readonly auth = inject(AuthService);
   readonly stati = STATI_APPUNTAMENTO;
   readonly giorniSettimana = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
   readonly maxChips = MAX_CHIPS_PER_DAY;
@@ -263,6 +266,7 @@ export class CalendarioPageComponent implements OnInit {
   }
 
   async openNew(day: Date, docId?: number): Promise<void> {
+    if (!this.auth.isAdmin()) return; // il backend rifiuterebbe comunque la scrittura
     this.resetEditor();
     this.form = this.emptyForm(day);
     this.editing = true;

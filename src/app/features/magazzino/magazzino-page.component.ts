@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
+import { AdminOnlyDirective } from '../../core/admin-only.directive';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,27 +13,27 @@ import { errorMessage } from '../../shared/error-message';
 @Component({
   selector: 'app-magazzino-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, AdminOnlyDirective],
   template: `
     <section class="page">
       <header class="page-header">
         <h1>Ubicazioni magazzino</h1>
-        <button type="button" class="btn btn-primary" (click)="create()">+ Nuova ubicazione</button>
+        <button appAdmin type="button" class="btn btn-primary" (click)="create()">+ Nuova ubicazione</button>
       </header>
       <div *ngIf="error" class="error-block">{{ error }}</div>
       <section *ngIf="editing" class="card">
         <h2>{{ isNew ? 'Nuova ubicazione' : 'Modifica ubicazione' }}</h2>
-        <form (ngSubmit)="save()" class="form-grid">
+        <form (ngSubmit)="save()"><fieldset class="lock form-grid" [disabled]="!auth.isAdmin()">
           <label>Codice ubicazione<input class="form-control" [(ngModel)]="form.codiceUbicazione" name="codice" required></label>
           <label>Zona<input class="form-control" [(ngModel)]="form.zona" name="zona" required></label>
           <label>Scaffale<input class="form-control" [(ngModel)]="form.scaffale" name="scaffale"></label>
           <label>Ripiano<input class="form-control" [(ngModel)]="form.ripiano" name="ripiano"></label>
           <label>Capacità massima<input class="form-control" type="number" [(ngModel)]="form.capacitaMax" name="capacita"></label>
           <label>Note<textarea class="form-control" [(ngModel)]="form.note" name="note"></textarea></label>
-          <div class="form-actions">
-            <button class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
+          </fieldset><div class="form-actions">
+            <button appAdmin class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
             <button type="button" class="btn btn-secondary" (click)="back()">Indietro</button>
-            <button *ngIf="!isNew" type="button" class="btn btn-danger" (click)="remove()">Elimina</button>
+            <button appAdmin *ngIf="!isNew" type="button" class="btn btn-danger" (click)="remove()">Elimina</button>
           </div>
         </form>
       </section>
@@ -42,7 +44,7 @@ import { errorMessage } from '../../shared/error-message';
             <thead><tr><th>ID</th><th>Codice</th><th>Zona</th><th>Scaffale</th><th>Ripiano</th><th>Capacità</th><th>Note</th><th></th></tr></thead>
             <tbody><tr *ngFor="let item of paginatedItems">
               <td>{{ item.ubicazioneId }}</td><td>{{ item.codiceUbicazione }}</td><td>{{ item.zona }}</td><td>{{ item.scaffale }}</td><td>{{ item.ripiano }}</td><td>{{ item.capacitaMax }}</td><td>{{ item.note }}</td>
-              <td><button type="button" class="btn btn-secondary" (click)="edit(item)">Modifica</button></td>
+              <td><button type="button" class="btn btn-secondary" (click)="edit(item)">{{ auth.isAdmin() ? 'Modifica' : 'Apri' }}</button></td>
             </tr></tbody>
           </table>
         </div>
@@ -82,6 +84,7 @@ import { errorMessage } from '../../shared/error-message';
   `]
 })
 export class MagazzinoPageComponent implements OnInit {
+  readonly auth = inject(AuthService);
   items: MagazzinoResponse[] = [];
   loading = false;
   saving = false;

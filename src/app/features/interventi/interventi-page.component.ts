@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
+import { AdminOnlyDirective } from '../../core/admin-only.directive';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,19 +17,19 @@ import { errorMessage } from '../../shared/error-message';
 @Component({
   selector: 'app-interventi-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, AdminOnlyDirective],
   template: `
     <section class="page">
       <header class="page-header">
         <h1>Interventi</h1>
-        <button class="btn btn-primary" (click)="create()">+ Nuovo intervento</button>
+        <button appAdmin class="btn btn-primary" (click)="create()">+ Nuovo intervento</button>
       </header>
       <div *ngIf="error" class="error-block">⚠️ {{ error }}</div>
 
       <section *ngIf="editing" class="card">
         <h2>{{ isNew ? 'Nuovo intervento' : 'Intervento' }}</h2>
         <div *ngIf="loading" class="loading">Caricamento...</div>
-        <form *ngIf="!loading" (ngSubmit)="save()">
+        <form *ngIf="!loading" (ngSubmit)="save()"><fieldset class="lock" [disabled]="!auth.isAdmin()">
           <div class="form-grid">
             <label>Cliente ID<input class="form-control" type="number" [(ngModel)]="form.clienteId" name="clienteId" required></label>
             <label>Titolo<input class="form-control" [(ngModel)]="form.titolo" name="titolo" required></label>
@@ -39,10 +41,10 @@ import { errorMessage } from '../../shared/error-message';
             <label>Problema<textarea class="form-control" [(ngModel)]="form.descrizioneProblema" name="problema"></textarea></label>
             <label>Soluzione<textarea class="form-control" [(ngModel)]="form.soluzioneApplicata" name="soluzione"></textarea></label>
           </div>
-          <div class="form-actions">
-            <button class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
+          </fieldset><div class="form-actions">
+            <button appAdmin class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
             <button type="button" class="btn btn-secondary" (click)="back()">Indietro</button>
-            <button *ngIf="!isNew" type="button" class="btn btn-danger" (click)="deleteIntervento()">Elimina</button>
+            <button appAdmin *ngIf="!isNew" type="button" class="btn btn-danger" (click)="deleteIntervento()">Elimina</button>
           </div>
         </form>
         <section *ngIf="!isNew && id !== null" class="card nested">
@@ -54,7 +56,7 @@ import { errorMessage } from '../../shared/error-message';
             <tbody><tr *ngFor="let item of paginatedRicambi">
               <td>{{ item.articoloId }}</td><td>{{ item.codiceRicambio }}</td><td>{{ item.descrizioneRicambio }}</td>
               <td>{{ item.quantitaUtilizzata }}</td><td>{{ item.prezzoUnitario }}</td>
-              <td><button class="btn btn-danger" (click)="removeRicambio(item)">Rimuovi</button></td>
+              <td><button appAdmin class="btn btn-danger" (click)="removeRicambio(item)">Rimuovi</button></td>
             </tr></tbody>
           </table>
           <app-pagination
@@ -65,14 +67,14 @@ import { errorMessage } from '../../shared/error-message';
             (pageChange)="goToRicambiPage($event)"
             (pageSizeChange)="changeRicambiPageSize($event)">
           </app-pagination>
-          <form (ngSubmit)="addRicambio()" class="form-grid">
+          <form (ngSubmit)="addRicambio()"><fieldset class="lock form-grid" [disabled]="!auth.isAdmin()">
             <label>Articolo ID<input class="form-control" type="number" [(ngModel)]="ricambioForm.articoloId" name="articoloId" required></label>
             <label>Quantità<input class="form-control" type="number" [(ngModel)]="ricambioForm.quantitaUtilizzata" name="quantitaUtilizzata" required></label>
             <label>Codice<input class="form-control" [(ngModel)]="ricambioForm.codiceRicambio" name="codiceRicambio"></label>
             <label>Descrizione<input class="form-control" [(ngModel)]="ricambioForm.descrizioneRicambio" name="descrizioneRicambio"></label>
             <label>Prezzo unitario<input class="form-control" type="number" step="0.01" [(ngModel)]="ricambioForm.prezzoUnitario" name="prezzoUnitario"></label>
-            <button class="btn btn-primary" [disabled]="ricambioSaving">{{ ricambioSaving ? 'Aggiunta...' : 'Aggiungi ricambio' }}</button>
-          </form>
+            <button appAdmin class="btn btn-primary" [disabled]="ricambioSaving">{{ ricambioSaving ? 'Aggiunta...' : 'Aggiungi ricambio' }}</button>
+          </fieldset></form>
         </section>
       </section>
 
@@ -107,6 +109,7 @@ import { errorMessage } from '../../shared/error-message';
   styles: [`.page-header,.form-actions,.filter-row{display:flex;align-items:center;gap:12px;justify-content:space-between}.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.form-grid label,.filter-row label{display:grid;gap:6px}.nested{margin-top:20px}.card{margin-bottom:20px;padding:20px;background:var(--surface);border-radius:12px;box-shadow:0 2px 8px #00000012}.form-control{padding:9px;border:1px solid var(--field);border-radius:6px}.data-table{width:100%;border-collapse:collapse;margin:16px 0}.data-table td,.data-table th{text-align:left;padding:9px;border-bottom:1px solid var(--line)}.error-block{margin:12px 0;padding:10px;background:var(--danger-bg);color:var(--danger)}.btn{padding:8px 12px;border:0;border-radius:6px;cursor:pointer}.btn-primary{background:var(--petrol);color:white}.btn-secondary{background:var(--line)}.btn-danger{background:var(--danger);color:white}.loading{padding:20px;text-align:center}`]
 })
 export class InterventiPageComponent implements OnInit {
+  readonly auth = inject(AuthService);
   items: InterventoResponse[] = [];
   ricambi: RicambioResponse[] = [];
   attrezzature: AttrezzaturaResponse[] = [];

@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
+import { AdminOnlyDirective } from '../../core/admin-only.directive';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -27,7 +29,7 @@ interface RentalMaintenanceRow {
 @Component({
   selector: 'app-storia-noleggi-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
+  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent, AdminOnlyDirective],
   template: `
 <div class="page">
   <div class="page-header">
@@ -38,7 +40,7 @@ interface RentalMaintenanceRow {
         <p>Consulta i noleggi e tieni sotto controllo le manutenzioni degli apparecchi.</p>
       </div>
     </div>
-    <button class="btn btn-primary" (click)="create()">+ Nuovo</button>
+    <button appAdmin class="btn btn-primary" (click)="create()">+ Nuovo</button>
   </div>
   <nav class="tabs" aria-label="Sezioni noleggi">
     <button type="button" [class.active]="activeTab === 'history'" (click)="activeTab = 'history'">Noleggi</button>
@@ -79,8 +81,8 @@ interface RentalMaintenanceRow {
             <td>{{ item.dataDoc }}</td>
             <td>{{ item.sezionale }}</td>
             <td class="actions">
-              <button class="btn btn-sm btn-secondary" (click)="edit(item)">✏️ Modifica</button>
-              <button class="btn btn-sm btn-danger" (click)="deleteItem(item)">🗑️ Elimina</button>
+              <button class="btn btn-sm btn-secondary" (click)="edit(item)">{{ auth.isAdmin() ? '✏️ Modifica' : '👁 Apri' }}</button>
+              <button appAdmin class="btn btn-sm btn-danger" (click)="deleteItem(item)">🗑️ Elimina</button>
             </td>
           </tr>
         </tbody>
@@ -158,6 +160,7 @@ interface RentalMaintenanceRow {
           </td>
           <td class="actions">
             <button
+              appAdmin
               *ngIf="row.state?.manutenzioneDovuta && row.state?.tipoManutenzioneDovuta !== 'STRAORDINARIA'"
               class="btn btn-sm btn-secondary"
               [disabled]="row.saving"
@@ -165,6 +168,7 @@ interface RentalMaintenanceRow {
               {{ row.saving ? 'Registrazione...' : 'Registra ordinaria' }}
             </button>
             <button
+              appAdmin
               type="button"
               class="btn btn-sm btn-danger"
               [disabled]="row.saving"
@@ -219,6 +223,7 @@ td.actions{white-space:nowrap}td.actions .btn+.btn{margin-left:8px}.empty-state{
 `]
 })
 export class StoriaNoleggioListComponent implements OnInit {
+  readonly auth = inject(AuthService);
   items: StoriaNoleggioResponse[] = [];
   filtered: StoriaNoleggioResponse[] = [];
   totalElements = 0;

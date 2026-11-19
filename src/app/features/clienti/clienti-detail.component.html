@@ -3,13 +3,13 @@
     <h1>{{ isNew ? '+ Nuovo Cliente' : '✏️ Modifica Cliente' }}</h1>
     <div class="header-actions">
       <button class="btn btn-secondary" (click)="goBack()">← Indietro</button>
-      <button *ngIf="!isNew" class="btn btn-danger" (click)="deleteItem()">🗑️ Elimina</button>
+      <button appAdmin *ngIf="!isNew" class="btn btn-danger" (click)="deleteItem()">🗑️ Elimina</button>
     </div>
   </div>
   <div class="card">
     <div *ngIf="loading" class="loading">⏳ Caricamento...</div>
     <div *ngIf="error" class="error-block">⚠️ {{ error }}</div>
-    <form *ngIf="!loading" (ngSubmit)="save()">
+    <form *ngIf="!loading" (ngSubmit)="save()"><fieldset class="lock" [disabled]="!auth.isAdmin()">
       <div class="form-grid">
         <div class="form-group">
           <label>Codice</label>
@@ -48,8 +48,8 @@
           <input type="number" [(ngModel)]="form.tipoListino" name="tipoListino" class="form-control" placeholder="Tipo Listino" />
         </div>
       </div>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary" [disabled]="saving">
+      </fieldset><div class="form-actions">
+        <button appAdmin type="submit" class="btn btn-primary" [disabled]="saving">
           {{ saving ? 'Salvataggio...' : '💾 Salva' }}
         </button>
       </div>
@@ -91,13 +91,13 @@
             <label>Manutenzione ogni (giorni)</label>
             <input type="number" min="1" step="1" [(ngModel)]="period.intervalloGiorni" [name]="'period-interval-' + i" class="form-control" />
           </div>
-          <button type="button" class="btn btn-secondary" (click)="removeMaintenancePeriod(i)">Rimuovi</button>
+          <button appAdmin type="button" class="btn btn-secondary" (click)="removeMaintenancePeriod(i)">Rimuovi</button>
         </div>
-        <button type="button" class="btn btn-secondary" (click)="addMaintenancePeriod()">+ Aggiungi stagione</button>
+        <button appAdmin type="button" class="btn btn-secondary" (click)="addMaintenancePeriod()">+ Aggiungi stagione</button>
         <div *ngIf="maintenancePlanError" class="error-block">{{ maintenancePlanError }}</div>
         <div *ngIf="maintenancePlanSaved" class="success-block">Configurazione cliente salvata.</div>
         <div class="form-actions">
-          <button type="button" class="btn btn-primary" [disabled]="maintenancePlanSaving" (click)="saveMaintenanceSchedule()">
+          <button appAdmin type="button" class="btn btn-primary" [disabled]="maintenancePlanSaving" (click)="saveMaintenanceSchedule()">
             {{ maintenancePlanSaving ? 'Salvataggio...' : 'Salva parametri per tutti i noleggi' }}
           </button>
         </div>

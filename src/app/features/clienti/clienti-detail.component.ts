@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
+import { AdminOnlyDirective } from '../../core/admin-only.directive';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -14,11 +16,12 @@ import { errorMessage } from '../../shared/error-message';
 @Component({
   selector: 'app-clienti-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminOnlyDirective],
   templateUrl: './clienti-detail.component.html',
   styleUrl: './clienti-detail.component.css'
 })
 export class ClientiDetailComponent implements OnInit {
+  readonly auth = inject(AuthService);
   isNew = false;
   loading = false;
   saving = false;

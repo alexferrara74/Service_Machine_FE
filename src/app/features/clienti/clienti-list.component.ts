@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth.service';
+import { AdminOnlyDirective } from '../../core/admin-only.directive';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -10,11 +12,12 @@ import { errorMessage } from '../../shared/error-message';
 @Component({
   selector: 'app-clienti-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, AdminOnlyDirective],
   templateUrl: './clienti-list.component.html',
   styleUrl: './clienti-list.component.css'
 })
 export class ClientiListComponent implements OnInit {
+  readonly auth = inject(AuthService);
   items: ClienteResponse[] = [];
   filtered: ClienteResponse[] = [];
   loading = false;
