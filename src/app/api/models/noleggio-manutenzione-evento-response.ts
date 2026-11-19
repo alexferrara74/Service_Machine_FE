@@ -5,4 +5,7 @@ export interface NoleggioManutenzioneEventoResponse {
   quantitaAcquistataTotale: number;
   eseguitaIl: string;
   note?: string | null;
+  esito?: string | null;
+  giorniProroga?: number | null;
+  appuntamentoId?: number | null;
 }

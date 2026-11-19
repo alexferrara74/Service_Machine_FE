@@ -12,13 +12,18 @@ import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
 import { CatalogoProdottiService } from '../catalogo/catalogo-prodotti.service';
 import { ProdottoCatalogo } from '../catalogo/prodotto-catalogo';
 import { NoleggioDocumentoService } from './noleggio-documento.service';
+import { RouterLink } from '@angular/router';
+import { StoriaNoleggiManutenzioniService } from '../../api/services/storia-noleggi-manutenzioni.service';
+import { NoleggioManutenzioneEventoResponse } from '../../api/models/noleggio-manutenzione-evento-response';
+import { Appuntamento, AppuntamentiService } from '../appuntamenti/appuntamenti.service';
+import { InterventiStoricoComponent } from '../appuntamenti/interventi-storico.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { errorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-storia-noleggi-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink, InterventiStoricoComponent],
   template: `
 <div class="page">
   <div class="page-header">
@@ -80,6 +85,20 @@ import { errorMessage } from '../../shared/error-message';
         </button>
       </div>
     </form>
+    <section *ngIf="!isNew && id !== null" class="document-section">
+      <h2>Appuntamenti</h2>
+      <p><a class="btn btn-primary" [routerLink]="['/appuntamenti', id, 'new']">+ Nuovo appuntamento</a></p>
+      <ul class="appuntamenti" *ngIf="appuntamenti.length; else nessunAppuntamento">
+        <li *ngFor="let a of appuntamenti" [class.ordinaria]="a.tipo === 'ORDINARIA'" [class.straordinaria]="a.tipo === 'STRAORDINARIA'">
+          <a [routerLink]="['/appuntamenti', id, a.id]">{{ a.dataPrevista | date:'dd/MM/yyyy HH:mm' }}</a>
+          <span>{{ a.tipo === 'ORDINARIA' ? 'Ordinaria' : 'Straordinaria' }} · {{ a.stato === 'PROGRAMMATO' ? 'da fare' : a.stato === 'COMPLETATO' ? 'completato' : 'annullato' }}</span>
+          <span *ngIf="a.foto.length">📷 {{ a.foto.length }}</span>
+        </li>
+      </ul>
+      <ng-template #nessunAppuntamento><p class="document-hint">Nessun appuntamento.</p></ng-template>
+      <h2 class="sub">Storico interventi</h2>
+      <app-interventi-storico [eventi]="eventi"></app-interventi-storico>
+    </section>
     <section class="document-section">
       <h2>Documento di noleggio</h2>
       <p *ngIf="isNew" class="document-hint">Il PDF selezionato verrà allegato al salvataggio del noleggio.</p>
@@ -122,6 +141,10 @@ import { errorMessage } from '../../shared/error-message';
 .document-picker{display:grid;gap:8px;max-width:400px;margin:16px 0;font-weight:600;color:var(--muted)}
 .document-actions{display:flex;gap:10px;flex-wrap:wrap}
 .document-selection{color:var(--muted)}
+.appuntamenti{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:6px}
+.appuntamenti li{display:flex;gap:12px;flex-wrap:wrap;padding:8px 10px;border-radius:8px;border-left:5px solid var(--line);background:var(--paper-2)}
+.appuntamenti li.ordinaria{border-color:var(--ordinaria);background:var(--ordinaria-bg)}.appuntamenti li.straordinaria{border-color:var(--straordinaria);background:var(--straordinaria-bg)}
+.document-section h2.sub{margin-top:20px}.btn{text-decoration:none;display:inline-block}
 .success-block{padding:10px;background:var(--ok-bg);color:var(--ok);border-radius:8px}
 .btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:14px;font-weight:500}.btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-primary{background:var(--petrol);color:#fff}.btn-secondary{background:var(--line);color:var(--ink)}.btn-danger{background:var(--danger);color:#fff}
@@ -143,6 +166,8 @@ export class StoriaNoleggioDetailComponent implements OnInit {
   id: number | null = null;
   articles: ProdottoCatalogo[] = [];
   clienti: ClienteResponse[] = [];
+  appuntamenti: Appuntamento[] = [];
+  eventi: NoleggioManutenzioneEventoResponse[] = [];
   attrezzature: AttrezzaturaResponse[] = [];
 
   get matricole(): AttrezzaturaResponse[] {
@@ -179,6 +204,8 @@ export class StoriaNoleggioDetailComponent implements OnInit {
     private attrezzatureService: AttrezzatureService,
     private catalogoService: CatalogoProdottiService,
     private documentService: NoleggioDocumentoService,
+    private appuntamentiService: AppuntamentiService,
+    private manutenzioniService: StoriaNoleggiManutenzioniService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -203,6 +230,8 @@ export class StoriaNoleggioDetailComponent implements OnInit {
         sezionale: data.sezionale ?? ''
       };
       await this.loadDocumentMetadata();
+      this.appuntamentiService.perNoleggio(this.id).then(a => this.appuntamenti = a).catch(() => { /* sezione informativa */ });
+      this.manutenzioniService.getEventi(this.id).then(e => this.eventi = e).catch(() => { /* sezione informativa */ });
     } catch (e: any) {
       this.error = errorMessage(e, 'Errore nel caricamento');
     } finally {

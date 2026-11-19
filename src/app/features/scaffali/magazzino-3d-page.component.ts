@@ -24,7 +24,8 @@ const COLORI = { vuota: 0xb8c4c1, occupata: 0x2e9d6b, trovata: 0xf2b705, struttu
         <div class="actions">
           <input class="form-control" type="search" placeholder="Cerca articolo (codice o descrizione)" [(ngModel)]="ricerca" (ngModelChange)="aggiornaColori()">
           <span *ngIf="ricerca.trim()" class="found">{{ trovate }} celle</span>
-          <button type="button" class="btn btn-secondary" (click)="stampaEtichette()">Stampa etichette</button>
+          <button type="button" class="btn" [class.btn-primary]="modoSposta" [class.btn-secondary]="!modoSposta" (click)="toggleSposta()">{{ modoSposta ? 'Fine spostamento' : 'Sposta scaffali' }}</button>
+          <button type="button" class="btn btn-secondary" [disabled]="stampando" (click)="stampaEtichette()">{{ stampando ? 'Preparo…' : 'Stampa etichette' }}</button>
           <a routerLink="/scaffali" class="btn btn-primary">Gestisci scaffali</a>
         </div>
       </header>
@@ -35,7 +36,15 @@ const COLORI = { vuota: 0xb8c4c1, occupata: 0x2e9d6b, trovata: 0xf2b705, struttu
           <div class="legend"><span class="dot vuota"></span>Vuota <span class="dot occupata"></span>Con articoli <span class="dot trovata"></span>Risultato ricerca</div>
         </div>
         <aside class="panel">
-          <ng-container *ngIf="selezionata as c; else nessuna">
+          <ng-container *ngIf="modoSposta">
+            <h2>Sposta scaffali</h2>
+            <p class="meta">Trascina uno scaffale sul pavimento: la posizione si aggiorna al rilascio (passo 5 cm).</p>
+            <ng-container *ngIf="scaffaleSelezionato as s">
+              <p><strong>{{ s.codice }}</strong> · centro {{ s.posXCm }}, {{ s.posYCm }} cm · {{ s.rotazioneGradi }}°</p>
+              <button type="button" class="btn btn-secondary" [disabled]="busy" (click)="ruota(s)">Ruota di 90°</button>
+            </ng-container>
+          </ng-container>
+          <ng-container *ngIf="!modoSposta && selezionata as c; else nessuna">
             <h2>{{ c.etichetta }}</h2>
             <p class="meta">{{ scaffaleDi(c)?.zona }} · scaffale {{ scaffaleDi(c)?.codice }} · ripiano {{ c.ripiano }} · posizione {{ c.posizione }}</p>
             <ul class="articoli" *ngIf="c.articoli.length; else vuota">
@@ -62,7 +71,7 @@ const COLORI = { vuota: 0xb8c4c1, occupata: 0x2e9d6b, trovata: 0xf2b705, struttu
               <button type="button" class="btn btn-primary" [disabled]="busy" (click)="assegna(c)">Assegna</button>
             </div>
           </ng-container>
-          <ng-template #nessuna><p class="meta">Clicca una cella dello scaffale per vedere l’etichetta e assegnare gli articoli. Trascina per ruotare, rotella per lo zoom.</p></ng-template>
+          <ng-template #nessuna><p *ngIf="!modoSposta" class="meta">Clicca una cella dello scaffale per vedere l’etichetta e assegnare gli articoli. Trascina per ruotare, rotella per lo zoom.</p></ng-template>
         </aside>
       </div>
     </section>
@@ -110,18 +119,23 @@ export class Magazzino3dPageComponent implements AfterViewInit, OnDestroy {
   quantitaNuova = 1;
   selezionataId: number | null = null;
   trovate = 0;
+  modoSposta = false;
+  stampando = false;
+  scaffaleSelId: number | null = null;
 
   private T!: ThreeModule;
   private renderer?: THREE.WebGLRenderer;
   private scene?: THREE.Scene;
   private camera?: THREE.PerspectiveCamera;
-  private controls?: { update(): void; target: THREE.Vector3; dispose(): void };
+  private controls?: { update(): void; enabled: boolean; target: THREE.Vector3; dispose(): void };
   private contenuto?: THREE.Group;
   private celleMesh = new Map<number, THREE.Mesh>();
   private frame = 0;
   private observer?: ResizeObserver;
   private cameraImpostata = false;
   private distrutto = false;
+  private gruppiScaffale = new Map<number, THREE.Group>();
+  private trascinamento: { id: number; group: THREE.Group; dx: number; dz: number } | null = null;
 
   constructor(
     private service: ScaffaliService,
@@ -194,9 +208,14 @@ export class Magazzino3dPageComponent implements AfterViewInit, OnDestroy {
 
     let down: { x: number; y: number } | null = null;
     const canvas = this.renderer.domElement;
-    canvas.addEventListener('pointerdown', e => down = { x: e.clientX, y: e.clientY });
+    canvas.addEventListener('pointerdown', e => {
+      down = { x: e.clientX, y: e.clientY };
+      if (this.modoSposta) this.iniziaTrascinamento(e);
+    });
+    canvas.addEventListener('pointermove', e => this.trascina(e));
     canvas.addEventListener('pointerup', e => {
-      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5) this.zone.run(() => this.clic(e));
+      if (this.trascinamento) { this.zone.run(() => this.finisciTrascinamento()); down = null; return; }
+      if (!this.modoSposta && down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5) this.zone.run(() => this.clic(e));
       down = null;
     });
 
@@ -233,6 +252,7 @@ export class Magazzino3dPageComponent implements AfterViewInit, OnDestroy {
       });
     }
     this.celleMesh.clear();
+    this.gruppiScaffale.clear();
     const g = this.contenuto = new T.Group();
     const struttura = new T.MeshStandardMaterial({ color: COLORI.struttura, roughness: 0.6 });
 
@@ -269,6 +289,8 @@ export class Magazzino3dPageComponent implements AfterViewInit, OnDestroy {
         this.celleMesh.set(c.ubicazioneId, m);
       }
       sg.add(this.targhetta(s.codice, h + 0.25));
+      sg.userData['scaffaleId'] = s.scaffaleId;
+      this.gruppiScaffale.set(s.scaffaleId, sg);
       g.add(sg);
     }
 
@@ -341,6 +363,80 @@ export class Magazzino3dPageComponent implements AfterViewInit, OnDestroy {
     this.aggiornaColori();
   }
 
+  get scaffaleSelezionato(): ScaffaleLayout | undefined {
+    return this.scaffali.find(s => s.scaffaleId === this.scaffaleSelId);
+  }
+
+  toggleSposta(): void {
+    this.modoSposta = !this.modoSposta;
+    this.scaffaleSelId = null;
+    this.selezionataId = null;
+    this.aggiornaColori();
+  }
+
+  private puntoSuPavimento(e: PointerEvent): THREE.Vector3 | null {
+    const T = this.T;
+    const rect = this.renderer!.domElement.getBoundingClientRect();
+    const ndc = new T.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+    const ray = new T.Raycaster();
+    ray.setFromCamera(ndc, this.camera!);
+    const p = new T.Vector3();
+    return ray.ray.intersectPlane(new T.Plane(new T.Vector3(0, 1, 0), 0), p) ? p : null;
+  }
+
+  private iniziaTrascinamento(e: PointerEvent): void {
+    const T = this.T;
+    const rect = this.renderer!.domElement.getBoundingClientRect();
+    const ndc = new T.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+    const ray = new T.Raycaster();
+    ray.setFromCamera(ndc, this.camera!);
+    const hit = ray.intersectObjects([...this.gruppiScaffale.values()], true)[0];
+    if (!hit) { this.zone.run(() => this.scaffaleSelId = null); return; }
+    let o: THREE.Object3D | null = hit.object;
+    while (o && o.userData['scaffaleId'] === undefined) o = o.parent;
+    if (!o) return;
+    const punto = this.puntoSuPavimento(e);
+    this.controls!.enabled = false;
+    this.trascinamento = { id: o.userData['scaffaleId'], group: o as THREE.Group, dx: punto ? o.position.x - punto.x : 0, dz: punto ? o.position.z - punto.z : 0 };
+    this.zone.run(() => this.scaffaleSelId = this.trascinamento!.id);
+  }
+
+  private trascina(e: PointerEvent): void {
+    if (!this.trascinamento) return;
+    const p = this.puntoSuPavimento(e);
+    if (!p) return;
+    const snap = (v: number) => Math.max(0, Math.round(v * 100 / 5) * 5) * CM;
+    this.trascinamento.group.position.x = snap(p.x + this.trascinamento.dx);
+    this.trascinamento.group.position.z = snap(p.z + this.trascinamento.dz);
+  }
+
+  private async finisciTrascinamento(): Promise<void> {
+    const t = this.trascinamento;
+    this.trascinamento = null;
+    this.controls!.enabled = true;
+    const s = this.scaffali.find(x => x.scaffaleId === t?.id);
+    if (!t || !s) return;
+    const x = Math.round(t.group.position.x / CM), y = Math.round(t.group.position.z / CM);
+    if (x === s.posXCm && y === s.posYCm) return;
+    await this.salvaScaffale(s, { posXCm: x, posYCm: y });
+  }
+
+  ruota(s: ScaffaleLayout): Promise<void> {
+    return this.salvaScaffale(s, { rotazioneGradi: (s.rotazioneGradi + 90) % 360 });
+  }
+
+  private async salvaScaffale(s: ScaffaleLayout, modifiche: Partial<ScaffaleLayout>): Promise<void> {
+    this.busy = true; this.error = '';
+    try {
+      await this.service.update(s.scaffaleId, {
+        codice: s.codice, zona: s.zona, larghezzaCm: s.larghezzaCm, profonditaCm: s.profonditaCm, altezzaCm: s.altezzaCm,
+        posXCm: s.posXCm, posYCm: s.posYCm, rotazioneGradi: s.rotazioneGradi,
+        numeroRipiani: s.numeroRipiani, posizioniPerRipiano: s.posizioniPerRipiano, ...modifiche
+      });
+    } catch (e) { this.error = errorMessage(e, 'Errore nello spostamento dello scaffale'); }
+    finally { this.busy = false; await this.ricarica(); }
+  }
+
   async assegna(c: Cella): Promise<void> {
     if (!this.articoloScelto) return;
     await this.esegui(() => this.service.assegna(c.ubicazioneId, this.articoloScelto!.articoloId, this.quantitaNuova), 'Errore nell’assegnazione');
@@ -363,20 +459,32 @@ export class Magazzino3dPageComponent implements AfterViewInit, OnDestroy {
   }
 
   /** Apre una pagina di sola stampa con le etichette: dello scaffale selezionato, altrimenti di tutti. */
-  stampaEtichette(): void {
+  async stampaEtichette(): Promise<void> {
+    const w = window.open('', '_blank');
+    if (!w) { this.error = 'Il browser ha bloccato la finestra di stampa'; return; }
+    this.stampando = true;
     const sel = this.selezionata;
     const elenco = sel ? this.scaffali.filter(s => s === this.scaffaleDi(sel)) : this.scaffali;
     const esc = (v: string) => v.replace(/[&<>"']/g, ch => `&#${ch.charCodeAt(0)};`);
-    const etichette = elenco.flatMap(s => s.celle.map(c => `
-      <div class="et"><div class="cod">${esc(c.etichetta)}</div>
-      <div class="sub">${esc(s.zona)} · Rip. ${c.ripiano} · Pos. ${c.posizione}</div></div>`)).join('');
-    const w = window.open('', '_blank');
-    if (!w) { this.error = 'Il browser ha bloccato la finestra di stampa'; return; }
+    let etichette = '';
+    try {
+      const QR = await import('qrcode');
+      for (const s of elenco) for (const c of s.celle) {
+        const qr = await QR.toDataURL(c.etichetta, { margin: 1, width: 180, errorCorrectionLevel: 'M' });
+        etichette += `<div class="et"><img src="${qr}" alt=""><div><div class="cod">${esc(c.etichetta)}</div>
+          <div class="sub">${esc(s.zona)} · Rip. ${c.ripiano} · Pos. ${c.posizione}</div></div></div>`;
+      }
+    } catch (e) {
+      w.close();
+      this.error = errorMessage(e, 'Errore nella generazione delle etichette');
+      return;
+    } finally { this.stampando = false; }
     w.document.write(`<!doctype html><title>Etichette magazzino</title><style>
       body{font-family:system-ui,sans-serif;margin:10mm}
-      .griglia{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
-      .et{border:1.5px solid #000;border-radius:3mm;padding:5mm;text-align:center;break-inside:avoid}
-      .cod{font-size:22pt;font-weight:700;letter-spacing:.5px}.sub{font-size:10pt;margin-top:2mm}
+      .griglia{display:grid;grid-template-columns:repeat(2,1fr);gap:4mm}
+      .et{display:flex;align-items:center;gap:4mm;border:1.5px solid #000;border-radius:3mm;padding:4mm;break-inside:avoid}
+      .et img{width:26mm;height:26mm}
+      .cod{font-size:18pt;font-weight:700;letter-spacing:.5px}.sub{font-size:9pt;margin-top:2mm}
     </style><div class="griglia">${etichette}</div><script>onload=()=>print()<\/script>`);
     w.document.close();
   }

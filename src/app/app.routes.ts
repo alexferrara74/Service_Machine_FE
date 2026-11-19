@@ -9,6 +9,7 @@ export const routes: Routes = [
   { path: 'catalogo-prodotti', loadComponent: () => import('./features/catalogo/catalogo-prodotti-page.component').then(m => m.CatalogoProdottiPageComponent) },
   { path: 'storia-noleggi', redirectTo: 'noleggi' },
   { path: 'storia-prodotti', redirectTo: 'prodotti' },
+  { path: 'appuntamenti', loadChildren: () => import('./features/appuntamenti/appuntamenti.routes').then(m => m.APPUNTAMENTI_ROUTES) },
   { path: 'interventi', loadChildren: () => import('./features/interventi/interventi.routes').then(m => m.INTERVENTI_ROUTES) },
   { path: 'magazzino', loadChildren: () => import('./features/magazzino/magazzino.routes').then(m => m.MAGAZZINO_ROUTES) },
   { path: 'magazzino-posizioni', loadChildren: () => import('./features/magazzino-posizioni/magazzino-posizioni.routes').then(m => m.MAGAZZINO_POSIZIONI_ROUTES) },

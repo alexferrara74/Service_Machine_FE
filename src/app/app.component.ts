@@ -16,6 +16,7 @@ export class AppComponent {
     { label: 'Parco macchine', items: [
       { path: '/attrezzature', label: 'Attrezzature' },
       { path: '/noleggi', label: 'Noleggi' },
+      { path: '/appuntamenti', label: 'Appuntamenti' },
       { path: '/interventi', label: 'Interventi' },
     ] },
     { label: 'Anagrafiche', items: [

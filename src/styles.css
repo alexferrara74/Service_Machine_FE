@@ -18,6 +18,10 @@
   --warn-bg: #fff3cf;
   --info: #12414a;
   --info-bg: #dcebed;
+  --ordinaria: #1f7a4d;        /* interventi ordinari: verde */
+  --ordinaria-bg: #e1f3e8;
+  --straordinaria: #1d4ed8;    /* interventi straordinari: blu */
+  --straordinaria-bg: #e0e9ff;
 }
 
 html {

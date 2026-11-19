@@ -19,4 +19,5 @@ export interface NoleggioManutenzioneResponse {
   giorniAllaManutenzione?: number | null;
   statoManutenzione: 'NON_CONFIGURATA' | 'PROGRAMMATA' | 'IN_SCADENZA' | 'IN_RITARDO';
   intervalloManutenzioneGiorni?: number | null;
+  giorniProrogaAttivi?: number | null;
 }
