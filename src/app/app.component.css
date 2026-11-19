@@ -119,14 +119,37 @@
     min-height: 100vh;
   }
 
+  /* Smartphone: riga in alto con marchio e utente (sempre raggiungibile, con Esci), sotto il menu che scorre di lato. */
   .sidebar {
     width: auto;
     min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    overflow: visible;
+  }
+
+  .sidebar-header { grid-column: 1; grid-row: 1; }
+
+  .sidebar-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    overflow-x: auto;
+  }
+
+  .sidebar .sidebar-user {
+    grid-column: 2;
+    grid-row: 1;
     flex-direction: row;
     align-items: center;
-    overflow-x: auto;
-    overflow-y: hidden;
+    gap: 12px;
+    padding: 8px 14px;
+    border-top: 0;
   }
+
+  .sidebar .sidebar-user .who { max-width: 110px; }
+  .sidebar .sidebar-user .role { display: none; }
+  .sidebar-user .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .sidebar-header {
     padding: 10px 14px;
