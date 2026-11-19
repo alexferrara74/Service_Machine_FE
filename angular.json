@@ -13,6 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
+            "allowedCommonJsDependencies": ["qrcode", "dijkstrajs", "pngjs"],
             "outputPath": "dist/servizi-pilot-fe",
             "index": "src/index.html",
             "browser": "src/main.ts",

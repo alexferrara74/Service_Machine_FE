@@ -29,6 +29,11 @@
   --st-fatto-bg: #e0f2e8;
   --st-annullato: #8a3a3a;         /* rosso spento, barrato */
   --st-annullato-bg: #ece6e6;
+
+  --ordinaria: #1f7a4d;        /* interventi ordinari: verde */
+  --ordinaria-bg: #e1f3e8;
+  --straordinaria: #1d4ed8;    /* interventi straordinari: blu */
+  --straordinaria-bg: #e0e9ff;
 }
 
 html {

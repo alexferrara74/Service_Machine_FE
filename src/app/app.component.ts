@@ -19,6 +19,7 @@ export class AppComponent {
     { label: 'Parco macchine', items: [
       { path: '/attrezzature', label: 'Attrezzature' },
       { path: '/noleggi', label: 'Noleggi' },
+      { path: '/appuntamenti', label: 'Appuntamenti noleggio' },
       { path: '/interventi', label: 'Interventi' },
       { path: '/calendario', label: 'Calendario assistenze' },
     ] },
@@ -28,6 +29,8 @@ export class AppComponent {
       { path: '/catalogo-prodotti', label: 'Catalogo ERP' },
     ] },
     { label: 'Magazzino', items: [
+      { path: '/magazzino-3d', label: 'Magazzino 3D' },
+      { path: '/scaffali', label: 'Scaffali' },
       { path: '/magazzino', label: 'Ubicazioni' },
       { path: '/magazzino-posizioni', label: 'Posizioni articoli' },
     ] },

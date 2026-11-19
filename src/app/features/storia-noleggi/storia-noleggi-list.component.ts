@@ -15,6 +15,7 @@ import { StoriaNoleggiManutenzioniService } from '../../api/services/storia-nole
 import { NoleggioManutenzioneResponse } from '../../api/models/noleggio-manutenzione-response';
 import { NoleggioManutenzioneEventoResponse } from '../../api/models/noleggio-manutenzione-evento-response';
 import { PaginationComponent } from '../../shared/pagination.component';
+import { InterventiStoricoComponent } from '../appuntamenti/interventi-storico.component';
 import { errorMessage } from '../../shared/error-message';
 
 interface RentalMaintenanceRow {
@@ -29,7 +30,7 @@ interface RentalMaintenanceRow {
 @Component({
   selector: 'app-storia-noleggi-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent, AdminOnlyDirective],
+  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent, AdminOnlyDirective, InterventiStoricoComponent],
   template: `
 <div class="page">
   <div class="page-header">
@@ -135,7 +136,9 @@ interface RentalMaintenanceRow {
               {{ daysLabel(row.state) }}
             </small>
           </td>
-          <td>{{ row.state?.intervalloManutenzioneGiorni ? row.state?.intervalloManutenzioneGiorni + ' giorni' : '—' }}</td>
+          <td>{{ row.state?.intervalloManutenzioneGiorni ? row.state?.intervalloManutenzioneGiorni + ' giorni' : '—' }}
+            <small *ngIf="row.state?.prossimaStraordinariaIl">Straordinaria: {{ row.state?.prossimaStraordinariaIl | date:'dd/MM/yyyy':'UTC' }}</small>
+          </td>
           <td>{{ row.state?.ultimaManutenzioneIl ? (row.state?.ultimaManutenzioneIl | date:'short') : 'Mai registrata' }}</td>
           <td>
             <span *ngIf="row.error" class="status status-alert">{{ row.error }}</span>
@@ -148,17 +151,17 @@ interface RentalMaintenanceRow {
           </td>
           <td>
             <details *ngIf="row.events.length">
-              <summary>{{ row.events.length }} interventi</summary>
-              <ul class="event-list">
-                <li *ngFor="let event of row.events">
-                  {{ event.tipo }} · {{ event.eseguitaIl | date:'short' }}
-                  <span *ngIf="event.note"> · {{ event.note }}</span>
-                </li>
-              </ul>
+              <summary>
+                {{ row.events.length }} interventi
+                <span class="conta ord">{{ countTipo(row, 'ORDINARIA') }} ordinarie</span>
+                <span class="conta str">{{ countTipo(row, 'STRAORDINARIA') }} straordinarie</span>
+              </summary>
+              <app-interventi-storico [eventi]="row.events"></app-interventi-storico>
             </details>
             <span *ngIf="!row.events.length">Nessuno</span>
           </td>
           <td class="actions">
+            <a class="btn btn-sm btn-primary" [routerLink]="['/appuntamenti', row.rental.docId, 'new']">+ Appuntamento</a>
             <button
               appAdmin
               *ngIf="row.state?.manutenzioneDovuta && row.state?.tipoManutenzioneDovuta !== 'STRAORDINARIA'"
@@ -217,7 +220,7 @@ td.actions{white-space:nowrap}td.actions .btn+.btn{margin-left:8px}.empty-state{
 .maintenance-note{max-width:820px;color:var(--muted);font-size:13px;line-height:1.6;margin:8px 0 18px}
 .maintenance-table{min-width:1120px}.maintenance-table td:first-child{font-weight:650}.maintenance-table small{display:block;color:var(--muted);margin-top:4px;font-size:11px}.maintenance-table a{color:var(--petrol);text-decoration:none}.maintenance-table a:hover{text-decoration:underline}
 .status{display:inline-flex;align-items:center;padding:6px 9px;border-radius:999px;font-size:11px;line-height:1.35;font-weight:700;background:var(--paper-2);color:var(--muted);white-space:normal;min-width:max-content}
-.status-ok{background:var(--ok-bg);color:var(--ok)}.status-alert{background:var(--warn-bg);color:var(--warn)}.status-soon{background:var(--signal);color:var(--ink)}.status-late{background:var(--danger);color:#fff}.event-list{min-width:260px;padding:8px 0 0 18px}.event-list li{margin:7px 0;font-size:12px;color:var(--muted)}
+.status-ok{background:var(--ok-bg);color:var(--ok)}.status-alert{background:var(--warn-bg);color:var(--warn)}.status-soon{background:var(--signal);color:var(--ink)}.status-late{background:var(--danger);color:#fff}.conta{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}.conta.ord{background:var(--ordinaria-bg);color:var(--ordinaria)}.conta.str{background:var(--straordinaria-bg);color:var(--straordinaria)}details app-interventi-storico{display:block;margin-top:8px}.event-list{min-width:260px;padding:8px 0 0 18px}.event-list li{margin:7px 0;font-size:12px;color:var(--muted)}
 
 @media(max-width:700px){.page-header{align-items:flex-start}.page-title{align-items:flex-start}.page-icon{width:42px;height:42px}.page-header h1{font-size:21px}.page-header p{max-width:320px;line-height:1.45}.card{padding:16px}.search-bar{align-items:stretch}.search-input{flex:1;min-width:0;max-width:none}.tabs{width:100%}.tabs button{flex:1;padding:9px 8px;font-size:12px}.maintenance-header{align-items:flex-start}}
 `]
@@ -349,6 +352,10 @@ export class StoriaNoleggioListComponent implements OnInit {
 
   get paginatedMaintenanceRows(): RentalMaintenanceRow[] {
     return this.maintenanceRows;
+  }
+
+  countTipo(row: RentalMaintenanceRow, tipo: string): number {
+    return row.events.filter(e => e.tipo === tipo).length;
   }
 
   daysLabel(state?: NoleggioManutenzioneResponse): string {
