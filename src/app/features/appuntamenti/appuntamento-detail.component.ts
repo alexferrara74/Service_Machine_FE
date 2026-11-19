@@ -52,13 +52,17 @@ import { errorMessage } from '../../shared/error-message';
           <legend>Esito dell’intervento</legend>
           <label class="radio"><input type="radio" name="esito" value="POSITIVO" [(ngModel)]="form.esito" (ngModelChange)="onEsito()"> Positivo — apparecchio in ordine</label>
           <label class="radio"><input type="radio" name="esito" value="NEGATIVO" [(ngModel)]="form.esito" (ngModelChange)="onEsito()"> Negativo — problema riscontrato</label>
-          <label *ngIf="form.esito === 'POSITIVO'" class="proroga">
-            Allunga la prossima manutenzione di (giorni)
-            <input class="form-control" type="number" min="0" max="365" [(ngModel)]="form.giorniProroga" name="proroga">
-            <small *ngIf="item?.intervalloManutenzioneGiorni || suggerita">
-              Intervallo attuale {{ item?.intervalloManutenzioneGiorni ?? stato?.intervalloManutenzioneGiorni }} giorni; proposta {{ suggerita }} giorni. Metti 0 per non allungare.
-            </small>
-          </label>
+          <div *ngIf="form.esito === 'POSITIVO'" class="proroghe">
+            <p class="meta">Con esito positivo puoi allungare i tempi della manutenzione ordinaria e/o straordinaria. Metti 0 dove non serve.</p>
+            <label>Allunga la prossima <strong class="ord">ordinaria</strong> di (giorni)
+              <input class="form-control" type="number" min="0" max="365" [(ngModel)]="form.giorniProrogaOrdinaria" name="prorogaOrd">
+              <small>Scade il {{ stato?.prossimaManutenzioneIl ? (stato?.prossimaManutenzioneIl | date:'dd/MM/yyyy':'UTC') : '—' }}; intervallo {{ intervallo }} giorni, proposta {{ suggerita }}.</small>
+            </label>
+            <label>Allunga la prossima <strong class="str">straordinaria</strong> di (giorni)
+              <input class="form-control" type="number" min="0" max="365" [(ngModel)]="form.giorniProrogaStraordinaria" name="prorogaStr">
+              <small>Scade il {{ stato?.prossimaStraordinariaIl ? (stato?.prossimaStraordinariaIl | date:'dd/MM/yyyy':'UTC') : 'non calcolabile (manca la configurazione)' }}.</small>
+            </label>
+          </div>
         </fieldset>
 
         <section class="foto" *ngIf="!isNew">
@@ -97,7 +101,7 @@ import { errorMessage } from '../../shared/error-message';
     label{display:grid;gap:6px;font-weight:600}small{font-weight:400;color:var(--muted)}
     .form-control{padding:10px;border:1px solid var(--field);border-radius:6px;font:inherit;width:100%}
     .esito{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px}
-    .radio{display:flex;gap:8px;align-items:center;font-weight:500}.proroga{max-width:360px}
+    .radio{display:flex;gap:8px;align-items:center;font-weight:500}.proroghe{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.proroghe .meta{grid-column:1/-1;margin:0}.ord{color:var(--ordinaria)}.str{color:var(--straordinaria)}
     .foto h2{font-size:16px;margin:0 0 10px}
     .griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px}
     figure{position:relative;margin:0}figure img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block}
@@ -122,7 +126,7 @@ export class AppuntamentoDetailComponent implements OnInit {
   info = '';
   item: Appuntamento | null = null;
   stato: NoleggioManutenzioneResponse | null = null;
-  form = { dataPrevista: '', tipo: 'ORDINARIA' as TipoIntervento, esito: null as EsitoAppuntamento | null, resoconto: '', giorniProroga: null as number | null };
+  form = { dataPrevista: '', tipo: 'ORDINARIA' as TipoIntervento, esito: null as EsitoAppuntamento | null, resoconto: '', giorniProrogaOrdinaria: null as number | null, giorniProrogaStraordinaria: null as number | null };
 
   constructor(
     private service: AppuntamentiService,
@@ -132,6 +136,10 @@ export class AppuntamentoDetailComponent implements OnInit {
   ) {}
 
   get chiuso(): boolean { return !!this.item && this.item.stato !== 'PROGRAMMATO'; }
+
+  get intervallo(): number {
+    return this.item?.intervalloManutenzioneGiorni ?? this.stato?.intervalloManutenzioneGiorni ?? 0;
+  }
 
   get suggerita(): number {
     const intervallo = this.item?.intervalloManutenzioneGiorni ?? this.stato?.intervalloManutenzioneGiorni ?? 0;
@@ -162,7 +170,9 @@ export class AppuntamentoDetailComponent implements OnInit {
   }
 
   onEsito(): void {
-    if (this.form.esito === 'POSITIVO' && this.form.giorniProroga === null) this.form.giorniProroga = this.suggerita;
+    if (this.form.esito !== 'POSITIVO') return;
+    if (this.form.giorniProrogaOrdinaria === null) this.form.giorniProrogaOrdinaria = this.suggerita;
+    if (this.form.giorniProrogaStraordinaria === null) this.form.giorniProrogaStraordinaria = 0;
   }
 
   private body(): AppuntamentoRequest {
@@ -171,7 +181,8 @@ export class AppuntamentoDetailComponent implements OnInit {
       tipo: this.form.tipo,
       esito: this.form.esito,
       resoconto: this.form.resoconto?.trim() || null,
-      giorniProroga: this.form.esito === 'POSITIVO' ? this.form.giorniProroga : null
+      giorniProrogaOrdinaria: this.form.esito === 'POSITIVO' ? this.form.giorniProrogaOrdinaria : null,
+      giorniProrogaStraordinaria: this.form.esito === 'POSITIVO' ? this.form.giorniProrogaStraordinaria : null
     };
   }
 
@@ -179,7 +190,7 @@ export class AppuntamentoDetailComponent implements OnInit {
     this.item = a;
     this.form = {
       dataPrevista: a.dataPrevista.slice(0, 16), tipo: a.tipo, esito: a.esito ?? null,
-      resoconto: a.resoconto ?? '', giorniProroga: a.giorniProroga ?? null
+      resoconto: a.resoconto ?? '', giorniProrogaOrdinaria: a.giorniProrogaOrdinaria ?? null, giorniProrogaStraordinaria: a.giorniProrogaStraordinaria ?? null
     };
   }
 
@@ -210,9 +221,11 @@ export class AppuntamentoDetailComponent implements OnInit {
   completa(): Promise<void> {
     if (!this.form.esito) { this.error = 'Per completare indica l’esito: positivo o negativo.'; return Promise.resolve(); }
     if (!this.form.resoconto?.trim()) { this.error = 'Per completare scrivi il resoconto.'; return Promise.resolve(); }
-    const msg = this.form.esito === 'POSITIVO' && this.form.giorniProroga
-      ? `Completare l’appuntamento come ${this.form.tipo === 'ORDINARIA' ? 'ordinaria' : 'straordinaria'}? La prossima manutenzione verrà allungata di ${this.form.giorniProroga} giorni.`
-      : `Completare l’appuntamento come ${this.form.tipo === 'ORDINARIA' ? 'ordinaria' : 'straordinaria'}?`;
+    const tipo = this.form.tipo === 'ORDINARIA' ? 'ordinaria' : 'straordinaria';
+    const proroghe: string[] = [];
+    if (this.form.esito === 'POSITIVO' && this.form.giorniProrogaOrdinaria) proroghe.push(`ordinaria +${this.form.giorniProrogaOrdinaria} giorni`);
+    if (this.form.esito === 'POSITIVO' && this.form.giorniProrogaStraordinaria) proroghe.push(`straordinaria +${this.form.giorniProrogaStraordinaria} giorni`);
+    const msg = `Completare l’appuntamento come ${tipo}?` + (proroghe.length ? ` Prossime manutenzioni allungate: ${proroghe.join(', ')}.` : '');
     if (!confirm(msg)) return Promise.resolve();
     return this.esegui(async () => {
       this.riempi(await this.service.completa(this.docId, this.id!, this.body()));

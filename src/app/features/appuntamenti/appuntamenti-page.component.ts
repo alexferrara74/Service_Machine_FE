@@ -39,7 +39,7 @@ import { errorMessage } from '../../shared/error-message';
                 <td>{{ a.matricola || '—' }}<small>Doc {{ a.docId }}</small></td>
                 <td><span class="chip" [class.ord]="a.tipo === 'ORDINARIA'" [class.str]="a.tipo === 'STRAORDINARIA'">{{ a.tipo === 'ORDINARIA' ? 'Ordinaria' : 'Straordinaria' }}</span></td>
                 <td>{{ statoLabel(a.stato) }}</td>
-                <td>{{ a.esito === 'POSITIVO' ? 'Positivo' : a.esito === 'NEGATIVO' ? 'Negativo' : '—' }}<small *ngIf="a.giorniProroga">+{{ a.giorniProroga }} giorni</small></td>
+                <td>{{ a.esito === 'POSITIVO' ? 'Positivo' : a.esito === 'NEGATIVO' ? 'Negativo' : '—' }}<small *ngIf="a.giorniProrogaOrdinaria">Ordinaria +{{ a.giorniProrogaOrdinaria }} gg</small><small *ngIf="a.giorniProrogaStraordinaria">Straordinaria +{{ a.giorniProrogaStraordinaria }} gg</small></td>
                 <td><a class="btn btn-secondary" [routerLink]="['/appuntamenti', a.docId, a.id]">Apri</a></td>
               </tr>
             </tbody>

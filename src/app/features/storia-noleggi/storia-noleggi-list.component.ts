@@ -134,7 +134,9 @@ interface RentalMaintenanceRow {
               {{ daysLabel(row.state) }}
             </small>
           </td>
-          <td>{{ row.state?.intervalloManutenzioneGiorni ? row.state?.intervalloManutenzioneGiorni + ' giorni' : '—' }}</td>
+          <td>{{ row.state?.intervalloManutenzioneGiorni ? row.state?.intervalloManutenzioneGiorni + ' giorni' : '—' }}
+            <small *ngIf="row.state?.prossimaStraordinariaIl">Straordinaria: {{ row.state?.prossimaStraordinariaIl | date:'dd/MM/yyyy':'UTC' }}</small>
+          </td>
           <td>{{ row.state?.ultimaManutenzioneIl ? (row.state?.ultimaManutenzioneIl | date:'short') : 'Mai registrata' }}</td>
           <td>
             <span *ngIf="row.error" class="status status-alert">{{ row.error }}</span>

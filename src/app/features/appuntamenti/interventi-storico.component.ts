@@ -14,7 +14,8 @@ import { NoleggioManutenzioneEventoResponse } from '../../api/models/noleggio-ma
         <span class="badge">{{ e.tipo === 'ORDINARIA' ? 'Ordinaria' : 'Straordinaria' }}</span>
         <span class="quando">{{ e.eseguitaIl | date:'dd/MM/yyyy HH:mm' }}</span>
         <span *ngIf="e.esito" class="esito">{{ e.esito === 'POSITIVO' ? 'Esito positivo' : 'Esito negativo' }}</span>
-        <span *ngIf="e.giorniProroga" class="esito">+{{ e.giorniProroga }} gg</span>
+        <span *ngIf="e.giorniProrogaOrdinaria" class="esito">Ordinaria +{{ e.giorniProrogaOrdinaria }} gg</span>
+        <span *ngIf="e.giorniProrogaStraordinaria" class="esito">Straordinaria +{{ e.giorniProrogaStraordinaria }} gg</span>
         <span *ngIf="e.note" class="nota">{{ e.note }}</span>
         <a *ngIf="e.appuntamentoId" [routerLink]="['/appuntamenti', e.docId, e.appuntamentoId]">Apri appuntamento</a>
       </li>

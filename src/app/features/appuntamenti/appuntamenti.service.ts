@@ -11,7 +11,8 @@ export interface AppuntamentoRequest {
   tipo: TipoIntervento;
   esito?: EsitoAppuntamento | null;
   resoconto?: string | null;
-  giorniProroga?: number | null;
+  giorniProrogaOrdinaria?: number | null;
+  giorniProrogaStraordinaria?: number | null;
 }
 
 export interface FotoAppuntamento { id: number; nomeFile: string; }
@@ -27,7 +28,8 @@ export interface Appuntamento {
   tipo: TipoIntervento;
   esito?: EsitoAppuntamento | null;
   resoconto?: string | null;
-  giorniProroga?: number | null;
+  giorniProrogaOrdinaria?: number | null;
+  giorniProrogaStraordinaria?: number | null;
   intervalloManutenzioneGiorni?: number | null;
   completatoIl?: string | null;
   foto: FotoAppuntamento[];

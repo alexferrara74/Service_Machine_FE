@@ -6,6 +6,7 @@ export interface NoleggioManutenzioneEventoResponse {
   eseguitaIl: string;
   note?: string | null;
   esito?: string | null;
-  giorniProroga?: number | null;
+  giorniProrogaOrdinaria?: number | null;
+  giorniProrogaStraordinaria?: number | null;
   appuntamentoId?: number | null;
 }
