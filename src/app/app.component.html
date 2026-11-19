@@ -20,7 +20,7 @@
     <div class="sidebar-user">
       <div class="who">
         <span class="name">{{ auth.username() }}</span>
-        <span class="role" [class.admin]="auth.isAdmin()">{{ auth.isAdmin() ? 'Amministratore' : 'Sola lettura' }}</span>
+        <span class="role" [class.admin]="auth.isAdmin()">{{ auth.ruoloEtichetta() }}</span>
       </div>
       <a routerLink="/account" class="user-link">Il mio account</a>
       <button type="button" class="user-link" (click)="auth.logout()">Esci</button>

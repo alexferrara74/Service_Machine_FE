@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiConfiguration } from '../api/api-configuration';
 
-export type Ruolo = 'ADMIN' | 'VIEWER';
+export type Ruolo = 'ADMIN' | 'TECNICO' | 'VIEWER';
 
 export interface Sessione {
   token: string;
@@ -40,6 +40,10 @@ export class AuthService {
   readonly sessione = signal<Sessione | null>(this.leggi());
   readonly isAdmin = computed(() => this.sessione()?.ruolo === 'ADMIN');
   readonly isViewer = computed(() => this.sessione()?.ruolo === 'VIEWER');
+  readonly isTecnico = computed(() => this.sessione()?.ruolo === 'TECNICO');
+  /** Il tecnico, come l'amministratore, scrive negli appuntamenti (conferma, chiude, resoconto, foto). */
+  readonly puoScrivereAppuntamenti = computed(() => this.isAdmin() || this.isTecnico());
+  readonly ruoloEtichetta = computed(() => ({ ADMIN: 'Amministratore', TECNICO: 'Tecnico', VIEWER: 'Sola lettura' } as const)[this.sessione()?.ruolo ?? 'VIEWER']);
   readonly username = computed(() => this.sessione()?.username ?? '');
 
   get token(): string | null {

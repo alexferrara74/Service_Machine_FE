@@ -14,7 +14,7 @@ import { errorMessage } from '../../shared/error-message';
         <h1>Il mio account</h1>
       </header>
       <div class="card">
-        <p>Utente <strong>{{ auth.username() }}</strong> · ruolo <strong>{{ auth.isAdmin() ? 'Amministratore' : 'Sola lettura' }}</strong></p>
+        <p>Utente <strong>{{ auth.username() }}</strong> · ruolo <strong>{{ auth.ruoloEtichetta() }}</strong></p>
         <h2>Cambia password</h2>
         <p class="hint">Dopo il cambio le altre sessioni aperte con la vecchia password vengono chiuse.</p>
         <div *ngIf="error" class="error-block" role="alert">⚠️ {{ error }}</div>

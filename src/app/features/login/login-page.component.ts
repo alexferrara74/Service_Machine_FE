@@ -58,7 +58,7 @@ export class LoginPageComponent {
       await this.auth.login(this.username.trim(), this.password);
       const redirect = this.route.snapshot.queryParamMap.get('redirect');
       // Solo percorsi interni: un redirect assoluto sarebbe un open redirect.
-      await this.router.navigateByUrl(redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/');
+      await this.router.navigateByUrl(redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : this.auth.isTecnico() ? '/calendario' : '/');
     } catch (e) {
       this.password = '';
       this.error = e instanceof HttpErrorResponse && e.status === 401

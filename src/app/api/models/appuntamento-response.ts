@@ -9,6 +9,10 @@ export interface AppuntamentoResponse {
   clienteTelefono?: string;
   docId?: number;
   fine?: string;
+  foto?: Array<{
+    id?: number;
+    nomeFile?: string;
+  }>;
   id?: number;
   indirizzo?: string;
   inizio?: string;

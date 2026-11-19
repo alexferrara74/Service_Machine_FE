@@ -47,6 +47,28 @@ describe('autenticazione', () => {
     expect(auth.isViewer()).toBeTrue();
   });
 
+  it('lets a technician write appointments without making them an admin', () => {
+    const { auth } = setup();
+    auth.sessione.set(sessione('TECNICO'));
+    expect(auth.isTecnico()).toBeTrue();
+    expect(auth.isAdmin()).toBeFalse();
+    expect(auth.puoScrivereAppuntamenti()).toBeTrue();
+    expect(auth.ruoloEtichetta()).toBe('Tecnico');
+
+    auth.sessione.set(sessione('VIEWER'));
+    expect(auth.puoScrivereAppuntamenti()).toBeFalse();
+    auth.sessione.set(sessione('ADMIN'));
+    expect(auth.puoScrivereAppuntamenti()).toBeTrue();
+  });
+
+  it('keeps a technician out of admin pages', async () => {
+    const { auth, router } = setup();
+    auth.sessione.set(sessione('TECNICO'));
+    const ok = await TestBed.runInInjectionContext(() => adminGuard({} as never, { url: '/utenti' } as never));
+    expect(ok).not.toBeTrue();
+    expect(router).toBeTruthy();
+  });
+
   it('sends the visitor to the login with the page they asked for', () => {
     const { router } = setup();
     const result = TestBed.runInInjectionContext(() => authGuard({} as never, { url: '/clienti' } as never));

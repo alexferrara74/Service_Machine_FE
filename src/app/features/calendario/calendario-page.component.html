@@ -14,6 +14,7 @@
   </div>
 
   <div *ngIf="error" class="error-block" role="alert">⚠️ {{ error }}</div>
+  <div *ngIf="info" class="success-block" role="status">✓ {{ info }}</div>
 
   <div class="card">
     <section *ngIf="exportOpen" class="export-panel" aria-label="Esporta appuntamenti">
@@ -99,7 +100,7 @@
 </div>
 
 <!-- Editor appuntamento -->
-<div *ngIf="editing" class="overlay" (mousedown)="$event.target === $event.currentTarget && closeEditor()">
+<div *ngIf="editing" class="overlay" (mousedown)="chiudiDalloSfondo($event)">
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
     <h2 id="dlg-title">{{ editingId === null ? 'Nuovo appuntamento' : 'Appuntamento' }}</h2>
     <div *ngIf="editorError" class="error-block" role="alert">⚠️ {{ editorError }}</div>
@@ -179,19 +180,39 @@
           <label for="ind">Indirizzo intervento</label>
           <input id="ind" class="form-control" [(ngModel)]="form.indirizzo" name="indirizzo" maxlength="255">
         </div>
-        <div class="form-group wide">
-          <label for="no">Note</label>
-          <textarea id="no" class="form-control" rows="3" [(ngModel)]="form.note" name="note" maxlength="2000"></textarea>
-        </div>
       </div>
       </fieldset>
 
+      <!-- Fuori dal blocco dell'amministratore: il tecnico scrive qui il resoconto e allega le foto. -->
+      <div class="form-group">
+        <label for="no">Note e resoconto dell’intervento</label>
+        <textarea id="no" class="form-control" rows="4" [(ngModel)]="form.note" name="note" maxlength="2000" [disabled]="!puoModificare"
+                  placeholder="Cosa hai trovato e cosa hai fatto…"></textarea>
+        <small class="hint">Quando l’appuntamento viene chiuso, questo testo diventa la soluzione applicata dell’intervento.</small>
+      </div>
+
+      <section *ngIf="editingId !== null" class="foto" aria-label="Foto dell’intervento">
+        <h3>Foto ({{ foto.length }})</h3>
+        <div class="foto-grid">
+          <figure *ngFor="let f of foto">
+            <a [href]="urlFoto(f.id!)" target="_blank" rel="noopener"><img [src]="urlFoto(f.id!)" [alt]="f.nomeFile" loading="lazy"></a>
+            <button *ngIf="puoAllegare" type="button" class="foto-del" (click)="eliminaFoto(f.id!)" aria-label="Elimina foto">✕</button>
+          </figure>
+        </div>
+        <label *ngIf="puoAllegare" class="scatta">
+          <input type="file" accept="image/*" capture="environment" multiple (change)="aggiungiFoto($event)" [disabled]="uploading">
+          <span class="btn btn-secondary">{{ uploading ? 'Caricamento…' : '📷 Scatta o scegli foto' }}</span>
+        </label>
+        <p *ngIf="fotoError" class="error-block" role="alert">⚠️ {{ fotoError }}</p>
+      </section>
+      <p *ngIf="editingId === null" class="hint">Salva l’appuntamento per poter aggiungere le foto.</p>
+
       <div class="dialog-actions">
-        <button appAdmin class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
+        <button *ngIf="puoModificare" class="btn btn-primary" [disabled]="saving">{{ saving ? 'Salvataggio...' : 'Salva' }}</button>
         <button type="button" class="btn btn-secondary" (click)="closeEditor()" [disabled]="saving">Chiudi</button>
         <ng-container *ngIf="editingId !== null">
-          <button appAdmin *ngIf="form.stato === 'DA_CONFERMARE'" type="button" class="btn st-btn st-da-fare" [disabled]="saving" (click)="cambiaStato('DA_FARE')">● Conferma</button>
-          <button appAdmin *ngIf="form.stato === 'DA_CONFERMARE' || form.stato === 'DA_FARE'" type="button" class="btn st-btn st-fatto" [disabled]="saving" (click)="cambiaStato('FATTO')">✓ Segna come fatto</button>
+          <button *ngIf="puoModificare && form.stato === 'DA_CONFERMARE'" type="button" class="btn st-btn st-da-fare" [disabled]="saving" (click)="cambiaStato('DA_FARE')">● Conferma</button>
+          <button *ngIf="puoModificare && (form.stato === 'DA_CONFERMARE' || form.stato === 'DA_FARE')" type="button" class="btn st-btn st-fatto" [disabled]="saving" (click)="cambiaStato('FATTO')">✓ Segna come fatto</button>
           <button appAdmin *ngIf="form.stato !== 'ANNULLATO'" type="button" class="btn st-btn st-annullato" [disabled]="saving" (click)="cambiaStato('ANNULLATO')">✕ Annulla appuntamento</button>
           <button appAdmin type="button" class="btn btn-danger push" [disabled]="saving" (click)="remove()">Elimina</button>
         </ng-container>

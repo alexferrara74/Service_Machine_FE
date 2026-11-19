@@ -1,6 +1,6 @@
 import { AuthService } from '../../core/auth.service';
 import { AdminOnlyDirective } from '../../core/admin-only.directive';
-import { Component, HostListener, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -14,6 +14,8 @@ import { StoriaNoleggioResponse } from '../../api/models/storia-noleggio-respons
 import { errorMessage } from '../../shared/error-message';
 import { STATI_APPUNTAMENTO, StatoAppuntamento, statoAppuntamento } from '../../shared/stati-appuntamento';
 import { AppuntamentiExportService, FormatoExport, PeriodoExport } from './appuntamenti-export.service';
+import { AppuntamentoFotoService, FotoAppuntamentoCalendario } from './appuntamento-foto.service';
+import { ridimensionaFoto } from '../appuntamenti/appuntamenti.service';
 import { addDays, dayKey, parseLocal, startOfDay, startOfWeek, timeOf, toLocalDateTime } from '../../shared/calendar-dates';
 
 type Vista = 'mese' | 'settimana';
@@ -51,8 +53,9 @@ const MAX_CHIPS_PER_DAY = 3;
   templateUrl: './calendario-page.component.html',
   styleUrl: './calendario-page.component.css'
 })
-export class CalendarioPageComponent implements OnInit {
+export class CalendarioPageComponent implements OnInit, OnDestroy {
   readonly auth = inject(AuthService);
+  private readonly fotoService = inject(AppuntamentoFotoService);
   readonly stati = STATI_APPUNTAMENTO;
   readonly giorniSettimana = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
   readonly maxChips = MAX_CHIPS_PER_DAY;
@@ -64,6 +67,7 @@ export class CalendarioPageComponent implements OnInit {
   nascosti = new Set<StatoAppuntamento>();
   loading = false;
   error = '';
+  info = '';
 
   // --- export ---
   exportOpen = false;
@@ -78,6 +82,13 @@ export class CalendarioPageComponent implements OnInit {
   saving = false;
   editorError = '';
   form: EditorForm = this.emptyForm(new Date());
+
+  // --- foto dell'appuntamento aperto ---
+  foto: FotoAppuntamentoCalendario[] = [];
+  uploading = false;
+  fotoError = '';
+  private anteprime = new Map<number, string>();
+  private richieste = new Set<number>();
 
   // --- selezione noleggio censito ---
   clienti: ClienteResponse[] = [];
@@ -255,6 +266,20 @@ export class CalendarioPageComponent implements OnInit {
 
   // ---------- editor ----------
 
+  /** L'amministratore modifica tutto; il tecnico solo note, stato (conferma/chiude) e foto, e non su un appuntamento annullato. */
+  get puoModificare(): boolean {
+    return this.auth.isAdmin() || (this.auth.isTecnico() && this.form.stato !== 'ANNULLATO');
+  }
+
+  get puoAllegare(): boolean {
+    return this.auth.puoScrivereAppuntamenti() && this.form.stato !== 'ANNULLATO';
+  }
+
+  /** Chiude solo se il clic è proprio sullo sfondo: non va mai restituito false dal template, Angular lo trasformerebbe in preventDefault e i campi non prenderebbero il focus. */
+  chiudiDalloSfondo(ev: MouseEvent): void {
+    if (ev.target === ev.currentTarget) this.closeEditor();
+  }
+
   private emptyForm(day: Date): EditorForm {
     const inizio = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 9, 0);
     return {
@@ -267,6 +292,7 @@ export class CalendarioPageComponent implements OnInit {
 
   async openNew(day: Date, docId?: number): Promise<void> {
     if (!this.auth.isAdmin()) return; // il backend rifiuterebbe comunque la scrittura
+    this.info = '';
     this.resetEditor();
     this.form = this.emptyForm(day);
     this.editing = true;
@@ -274,8 +300,10 @@ export class CalendarioPageComponent implements OnInit {
   }
 
   async openExisting(e: AppuntamentoResponse): Promise<void> {
+    this.info = '';
     this.resetEditor();
     this.editingId = e.id ?? null;
+    this.foto = e.foto ?? [];
     this.form = {
       tipo: e.censito ? 'censito' : 'manuale',
       docId: e.docId ?? null,
@@ -300,6 +328,8 @@ export class CalendarioPageComponent implements OnInit {
   private resetEditor(): void {
     this.editingId = null;
     this.editorError = '';
+    this.foto = [];
+    this.fotoError = '';
     this.clienteQuery = '';
     this.clienteSelezionato = null;
     this.noleggiCliente = [];
@@ -404,9 +434,9 @@ export class CalendarioPageComponent implements OnInit {
     };
   }
 
-  async save(): Promise<void> {
+  async save(): Promise<boolean> {
     this.editorError = this.validate();
-    if (this.editorError) return;
+    if (this.editorError) return false;
     this.saving = true;
     try {
       const body = this.toRequest();
@@ -414,27 +444,75 @@ export class CalendarioPageComponent implements OnInit {
       else await this.service.update7({ id: this.editingId, body });
       this.editing = false;
       await this.load();
+      return true;
     } catch (error) {
       this.editorError = errorMessage(error, 'Errore nel salvataggio dell’appuntamento');
+      return false;
     } finally {
       this.saving = false;
     }
   }
 
+  /** Cambia lo stato salvando anche note e campi modificati: scrivere il resoconto e poi chiudere non deve perderlo. */
   async cambiaStato(stato: StatoAppuntamento): Promise<void> {
     if (this.editingId === null) { this.form.stato = stato; return; }
-    this.saving = true;
-    this.editorError = '';
-    try {
-      await this.service.updateStato({ id: this.editingId, body: { stato } });
-      this.editing = false;
-      await this.load();
-    } catch (error) {
-      this.editorError = errorMessage(error, 'Errore nel cambio di stato');
-    } finally {
-      this.saving = false;
+    const precedente = this.form.stato;
+    const censito = this.form.tipo === 'censito';
+    this.form.stato = stato;
+    if (await this.save()) {
+      if (stato === 'FATTO') {
+        this.info = censito ? 'Appuntamento chiuso: è registrato tra gli interventi effettuati.'
+                            : 'Appuntamento chiuso. Il cliente non è censito, quindi non si crea un intervento in anagrafica.';
+      }
+    } else {
+      this.form.stato = precedente;
     }
   }
+
+  // ---------- foto ----------
+
+  /** Usata dal template: la prima volta avvia il download autenticato, poi restituisce l'URL locale. */
+  urlFoto(fotoId: number): string | null {
+    if (!this.richieste.has(fotoId) && this.editingId !== null) {
+      this.richieste.add(fotoId);
+      this.fotoService.anteprima(this.editingId, fotoId).then(u => this.anteprime.set(fotoId, u)).catch(() => this.richieste.delete(fotoId));
+    }
+    return this.anteprime.get(fotoId) ?? null;
+  }
+
+  async aggiungiFoto(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    if (!files.length || this.editingId === null) return;
+    this.uploading = true;
+    this.fotoError = '';
+    try {
+      for (const file of files) {
+        const { blob, nome } = await ridimensionaFoto(file);
+        this.foto = [...this.foto, await this.fotoService.carica(this.editingId, blob, nome)];
+      }
+    } catch (error) {
+      this.fotoError = errorMessage(error, 'Errore nel caricamento della foto');
+    } finally {
+      this.uploading = false;
+      input.value = '';
+      this.load(); // l'elenco del calendario porta le foto di ogni appuntamento
+    }
+  }
+
+  async eliminaFoto(fotoId: number): Promise<void> {
+    if (this.editingId === null || !confirm('Eliminare questa foto?')) return;
+    this.fotoError = '';
+    try {
+      await this.fotoService.elimina(this.editingId, fotoId);
+      this.foto = this.foto.filter(f => f.id !== fotoId);
+      this.load();
+    } catch (error) {
+      this.fotoError = errorMessage(error, 'Errore nell’eliminazione della foto');
+    }
+  }
+
+  ngOnDestroy(): void { this.anteprime.forEach(u => URL.revokeObjectURL(u)); }
 
   async remove(): Promise<void> {
     if (this.editingId === null || !confirm('Eliminare definitivamente questo appuntamento? Per tenerne traccia usa "Annulla appuntamento".')) return;

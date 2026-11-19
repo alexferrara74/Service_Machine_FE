@@ -95,3 +95,18 @@
 .export-actions { display: flex; gap: 8px; }
 .export-info { flex-basis: 100%; color: var(--ink); }
 .export-panel .error-block { flex-basis: 100%; margin: 0; }
+
+.success-block { background: var(--ok-bg); color: var(--ok); padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; }
+
+/* ---- foto dell'intervento (tablet: bersagli grandi) ---- */
+.foto { margin: 0 0 14px; }
+.foto h3 { margin: 0 0 10px; font-size: 15px; }
+.foto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.foto-grid:empty { display: none; }
+.foto-grid figure { position: relative; margin: 0; }
+.foto-grid img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--paper-2); }
+.foto-del { position: absolute; top: 4px; right: 4px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, .65); color: #fff; font-size: 16px; cursor: pointer; }
+.scatta { position: relative; display: inline-block; }
+.scatta input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.scatta:focus-within .btn { outline: 2px solid var(--petrol); outline-offset: 2px; }
+.scatta .btn { min-height: 44px; }

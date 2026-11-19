@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -6,6 +6,7 @@ import { Appuntamento, AppuntamentiService, StatoAppuntamento } from './appuntam
 import { StoriaNoleggiService } from '../../api/services/storia-noleggi.service';
 import { StoriaNoleggioResponse } from '../../api/models/storia-noleggio-response';
 import { errorMessage } from '../../shared/error-message';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-appuntamenti-page',
@@ -15,7 +16,7 @@ import { errorMessage } from '../../shared/error-message';
     <section class="page">
       <header class="page-header">
         <h1>Appuntamenti</h1>
-        <form class="nuovo" (ngSubmit)="nuovo()">
+        <form *ngIf="auth.isAdmin()" class="nuovo" (ngSubmit)="nuovo()">
           <select class="form-control" [(ngModel)]="noleggioScelto" name="noleggio" aria-label="Noleggio">
             <option [ngValue]="null">Scegli il noleggio…</option>
             <option *ngFor="let n of noleggi" [ngValue]="n.docId">Doc {{ n.docId }} · {{ n.matricola || 'senza matricola' }}</option>
@@ -78,6 +79,8 @@ export class AppuntamentiPageComponent implements OnInit {
     { label: 'Da fare', value: 'PROGRAMMATO' }, { label: 'Completati', value: 'COMPLETATO' },
     { label: 'Annullati', value: 'ANNULLATO' }, { label: 'Tutti', value: undefined }
   ];
+
+  readonly auth = inject(AuthService);
 
   constructor(private service: AppuntamentiService, private noleggiService: StoriaNoleggiService, private router: Router) {}
 

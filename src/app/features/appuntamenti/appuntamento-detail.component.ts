@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import {
 import { StoriaNoleggiManutenzioniService } from '../../api/services/storia-noleggi-manutenzioni.service';
 import { NoleggioManutenzioneResponse } from '../../api/models/noleggio-manutenzione-response';
 import { errorMessage } from '../../shared/error-message';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-appuntamento-detail',
@@ -32,10 +33,10 @@ import { errorMessage } from '../../shared/error-message';
         </p>
         <div class="form-grid">
           <label>Data e ora
-            <input class="form-control" type="datetime-local" [(ngModel)]="form.dataPrevista" name="data" [disabled]="chiuso">
+            <input class="form-control" type="datetime-local" [(ngModel)]="form.dataPrevista" name="data" [disabled]="bloccato">
           </label>
           <label>Tipo di intervento
-            <select class="form-control" [(ngModel)]="form.tipo" name="tipo" [disabled]="chiuso">
+            <select class="form-control" [(ngModel)]="form.tipo" name="tipo" [disabled]="bloccato">
               <option value="ORDINARIA">Ordinaria (verde)</option>
               <option value="STRAORDINARIA">Straordinaria (blu)</option>
             </select>
@@ -44,11 +45,11 @@ import { errorMessage } from '../../shared/error-message';
         </div>
 
         <label class="full">Resoconto
-          <textarea class="form-control" rows="6" [(ngModel)]="form.resoconto" name="resoconto" [disabled]="chiuso"
+          <textarea class="form-control" rows="6" [(ngModel)]="form.resoconto" name="resoconto" [disabled]="bloccato"
             placeholder="Cosa hai trovato e cosa hai fatto sull’apparecchio…"></textarea>
         </label>
 
-        <fieldset class="esito" [disabled]="chiuso">
+        <fieldset class="esito" [disabled]="bloccato">
           <legend>Esito dell’intervento</legend>
           <label class="radio"><input type="radio" name="esito" value="POSITIVO" [(ngModel)]="form.esito" (ngModelChange)="onEsito()"> Positivo — apparecchio in ordine</label>
           <label class="radio"><input type="radio" name="esito" value="NEGATIVO" [(ngModel)]="form.esito" (ngModelChange)="onEsito()"> Negativo — problema riscontrato</label>
@@ -70,10 +71,10 @@ import { errorMessage } from '../../shared/error-message';
           <div class="griglia">
             <figure *ngFor="let f of item?.foto">
               <a [href]="urlFoto(f.id)" target="_blank" rel="noopener"><img [src]="urlFoto(f.id)" [alt]="f.nomeFile" loading="lazy"></a>
-              <button *ngIf="item?.stato !== 'ANNULLATO'" type="button" class="del" (click)="eliminaFoto(f.id)" aria-label="Elimina foto">✕</button>
+              <button *ngIf="item?.stato !== 'ANNULLATO' && auth.puoScrivereAppuntamenti()" type="button" class="del" (click)="eliminaFoto(f.id)" aria-label="Elimina foto">✕</button>
             </figure>
           </div>
-          <label *ngIf="item?.stato !== 'ANNULLATO'" class="scatta">
+          <label *ngIf="item?.stato !== 'ANNULLATO' && auth.puoScrivereAppuntamenti()" class="scatta">
             <input type="file" accept="image/*" capture="environment" multiple (change)="aggiungiFoto($event)" [disabled]="uploading">
             <span class="btn btn-secondary">{{ uploading ? 'Caricamento…' : '📷 Scatta o scegli foto' }}</span>
           </label>
@@ -81,9 +82,12 @@ import { errorMessage } from '../../shared/error-message';
         <p *ngIf="isNew" class="meta">Salva l’appuntamento per poter aggiungere le foto.</p>
 
         <div class="azioni">
-          <ng-container *ngIf="!chiuso">
+          <ng-container *ngIf="!bloccato">
             <button type="button" class="btn btn-secondary" [disabled]="busy" (click)="salva()">{{ isNew ? 'Crea appuntamento' : 'Salva bozza' }}</button>
             <button *ngIf="!isNew" type="button" class="btn btn-primary" [disabled]="busy" (click)="completa()">Completa appuntamento</button>
+          </ng-container>
+          <!-- annullare ed eliminare restano all'ufficio: il tecnico conferma e chiude -->
+          <ng-container *ngIf="!chiuso && auth.isAdmin()">
             <button *ngIf="!isNew" type="button" class="btn btn-secondary" [disabled]="busy" (click)="annulla()">Annulla appuntamento</button>
             <button *ngIf="!isNew" type="button" class="btn btn-danger" [disabled]="busy" (click)="elimina()">Elimina</button>
           </ng-container>
@@ -135,7 +139,11 @@ export class AppuntamentoDetailComponent implements OnInit, OnDestroy {
     private router: Router
   ) {}
 
+  readonly auth = inject(AuthService);
+
   get chiuso(): boolean { return !!this.item && this.item.stato !== 'PROGRAMMATO'; }
+  /** Campi e pulsanti di scrittura spenti se l'appuntamento è chiuso o l'utente non può scrivere (creare è solo dell'amministratore). */
+  get bloccato(): boolean { return this.chiuso || !(this.isNew ? this.auth.isAdmin() : this.auth.puoScrivereAppuntamenti()); }
 
   get intervallo(): number {
     return this.item?.intervalloManutenzioneGiorni ?? this.stato?.intervalloManutenzioneGiorni ?? 0;

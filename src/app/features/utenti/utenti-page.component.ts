@@ -29,6 +29,7 @@ import { errorMessage } from '../../shared/error-message';
           <label>Ruolo
             <select class="form-control" name="ruolo" [(ngModel)]="nuovo.ruolo">
               <option value="VIEWER">Sola lettura</option>
+              <option value="TECNICO">Tecnico (appuntamenti)</option>
               <option value="ADMIN">Amministratore</option>
             </select>
           </label>
@@ -46,6 +47,7 @@ import { errorMessage } from '../../shared/error-message';
               <td>
                 <select class="form-control sm" [ngModel]="u.ruolo" (ngModelChange)="cambiaRuolo(u, $event)" [disabled]="u.username === auth.username()" [attr.aria-label]="'Ruolo di ' + u.username">
                   <option value="VIEWER">Sola lettura</option>
+                  <option value="TECNICO">Tecnico (appuntamenti)</option>
                   <option value="ADMIN">Amministratore</option>
                 </select>
               </td>
