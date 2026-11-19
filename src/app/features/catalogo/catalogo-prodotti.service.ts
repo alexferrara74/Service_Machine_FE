@@ -11,6 +11,11 @@ export class CatalogoProdottiService {
     return firstValueFrom(this.http.get<ProdottoCatalogo[]>('/api/prodotti/catalogo'));
   }
 
+  /** Registra a mano un articolo (attrezzatura) che il catalogo ERP non contiene. */
+  create(body: { codice: string; descrizione: string; isAttrezzatura?: boolean }): Promise<ProdottoCatalogo> {
+    return firstValueFrom(this.http.post<ProdottoCatalogo>('/api/prodotti/catalogo', body));
+  }
+
   getAttrezzature(): Promise<ProdottoCatalogo[]> {
     return firstValueFrom(this.http.get<ProdottoCatalogo[]>('/api/prodotti/catalogo', {
       params: { attrezzatura: true }

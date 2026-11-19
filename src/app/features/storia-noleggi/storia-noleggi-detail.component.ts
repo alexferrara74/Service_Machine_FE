@@ -14,11 +14,14 @@ import { ProdottoCatalogo } from '../catalogo/prodotto-catalogo';
 import { NoleggioDocumentoService } from './noleggio-documento.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { errorMessage } from '../../shared/error-message';
+import { isManuale } from '../../shared/origine';
+import { ClienteQuickCreateComponent } from './cliente-quick-create.component';
+import { AttrezzaturaCreata, AttrezzaturaQuickCreateComponent } from './attrezzatura-quick-create.component';
 
 @Component({
   selector: 'app-storia-noleggi-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ClienteQuickCreateComponent, AttrezzaturaQuickCreateComponent],
   template: `
 <div class="page">
   <div class="page-header">
@@ -42,16 +45,26 @@ import { errorMessage } from '../../shared/error-message';
           <label>Cliente *</label>
           <select [(ngModel)]="form.clienteId" name="clienteId" class="form-control" required>
             <option [ngValue]="undefined">Seleziona un cliente</option>
-            <option *ngFor="let c of clienti" [ngValue]="c.id">{{ clienteLabel(c) }}</option>
+            <optgroup label="Importati dall'ERP">
+              <option *ngFor="let c of clientiErp" [ngValue]="c.id">{{ clienteLabel(c) }}</option>
+            </optgroup>
+            <optgroup *ngIf="clientiManuali.length" label="Creati a mano">
+              <option *ngFor="let c of clientiManuali" [ngValue]="c.id">{{ clienteLabel(c) }}</option>
+            </optgroup>
           </select>
+          <button type="button" class="link" (click)="showNewCliente = !showNewCliente; showNewAttrezzatura = false">{{ showNewCliente ? 'Chiudi' : '＋ Nuovo cliente' }}</button>
         </div>
+        <app-cliente-quick-create *ngIf="showNewCliente" (created)="onClienteCreated($event)" (cancelled)="showNewCliente = false"></app-cliente-quick-create>
         <div class="form-group">
           <label>Prodotto (attrezzatura) *</label>
           <select [ngModel]="form.articoloId" (ngModelChange)="onArticleChange($event)" name="articoloId" class="form-control" required>
             <option [ngValue]="undefined">Seleziona un articolo</option>
-            <option *ngFor="let article of articles" [ngValue]="article.articoloId">
-              {{ articleLabel(article) }}
-            </option>
+            <optgroup label="Catalogo ERP">
+              <option *ngFor="let article of articlesErp" [ngValue]="article.articoloId">{{ articleLabel(article) }}</option>
+            </optgroup>
+            <optgroup *ngIf="articlesManuali.length" label="Creati a mano">
+              <option *ngFor="let article of articlesManuali" [ngValue]="article.articoloId">{{ articleLabel(article) }}</option>
+            </optgroup>
           </select>
         </div>
         <div class="form-group">
@@ -60,7 +73,10 @@ import { errorMessage } from '../../shared/error-message';
           <datalist id="matricole">
             <option *ngFor="let a of matricoleArticolo" [value]="a.matricola">{{ a.descrizione }}</option>
           </datalist>
+          <button type="button" class="link" (click)="showNewAttrezzatura = !showNewAttrezzatura; showNewCliente = false">{{ showNewAttrezzatura ? 'Chiudi' : '＋ Nuova attrezzatura o matricola' }}</button>
         </div>
+        <app-attrezzatura-quick-create *ngIf="showNewAttrezzatura" [articoloSelezionato]="articoloSelezionato"
+          (articoloCreato)="onArticoloCreato($event)" (created)="onAttrezzaturaCreata($event)" (cancelled)="showNewAttrezzatura = false"></app-attrezzatura-quick-create>
         <div class="form-group">
           <label>Quantità</label>
           <input type="number" min="0" [(ngModel)]="form.quantita" name="quantita" class="form-control" placeholder="Quantità" />
@@ -125,6 +141,7 @@ import { errorMessage } from '../../shared/error-message';
 .document-selection{color:var(--muted)}
 .success-block{padding:10px;background:var(--ok-bg);color:var(--ok);border-radius:8px}
 .btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:14px;font-weight:500}.btn:disabled{opacity:.5;cursor:not-allowed}
+.link{align-self:flex-start;border:0;background:none;padding:0;color:var(--petrol);text-decoration:underline;cursor:pointer;font:inherit;font-size:13px}
 .btn-primary{background:var(--petrol);color:#fff}.btn-secondary{background:var(--line);color:var(--ink)}.btn-danger{background:var(--danger);color:#fff}
 `]
 })
@@ -145,6 +162,36 @@ export class StoriaNoleggioDetailComponent implements OnInit {
   articles: ProdottoCatalogo[] = [];
   clienti: ClienteResponse[] = [];
   attrezzature: AttrezzaturaResponse[] = [];
+
+  showNewCliente = false;
+  showNewAttrezzatura = false;
+
+  get clientiErp(): ClienteResponse[] { return this.clienti.filter(c => !isManuale(c)); }
+  get clientiManuali(): ClienteResponse[] { return this.clienti.filter(c => isManuale(c)); }
+  get articlesErp(): ProdottoCatalogo[] { return this.articles.filter(a => !isManuale(a)); }
+  get articlesManuali(): ProdottoCatalogo[] { return this.articles.filter(a => isManuale(a)); }
+  get articoloSelezionato(): ProdottoCatalogo | undefined {
+    return this.articles.find(a => a.articoloId === this.form.articoloId);
+  }
+
+  onClienteCreated(cliente: ClienteResponse): void {
+    this.clienti = [...this.clienti, cliente];
+    this.form.clienteId = cliente.id;
+    this.showNewCliente = false;
+  }
+
+  /** L'articolo creato compare subito nell'elenco, anche se la matricola poi non viene salvata. */
+  onArticoloCreato(articolo: ProdottoCatalogo): void {
+    if (!this.articles.some(a => a.articoloId === articolo.articoloId)) this.articles = [...this.articles, articolo];
+    this.form.articoloId = articolo.articoloId;
+  }
+
+  onAttrezzaturaCreata(creata: AttrezzaturaCreata): void {
+    this.onArticoloCreato(creata.articolo);
+    this.attrezzature = [...this.attrezzature, creata.attrezzatura];
+    this.form.matricola = creata.attrezzatura.matricola ?? '';
+    this.showNewAttrezzatura = false;
+  }
 
   get matricole(): AttrezzaturaResponse[] {
     return this.attrezzature.filter(a => a.matricola);
@@ -242,7 +289,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
     if (!this.form.dataDoc) return 'La data del noleggio è obbligatoria.';
     if (!this.form.matricola?.trim()) return 'La matricola è obbligatoria.';
     if (!this.matricole.some(a => a.matricola === this.form.matricola?.trim())) {
-      return 'Matricola non trovata: selezionane una dall\'elenco.';
+      return 'Matricola non trovata: selezionane una dall\'elenco oppure creala con "Nuova attrezzatura o matricola".';
     }
     if (this.form.quantita !== undefined && this.form.quantita !== null && this.form.quantita < 0) {
       return 'La quantità non può essere negativa.';

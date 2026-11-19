@@ -9,6 +9,7 @@ export interface ClienteResponse {
   email?: string;
   id?: number;
   nome?: string;
+  origine?: string;
   partitaIva?: string;
   ragioneSociale?: string;
   telefono?: string;

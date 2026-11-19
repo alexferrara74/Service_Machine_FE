@@ -1579,6 +1579,56 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppuntamentoResponse'
+  /api/prodotti/catalogo:
+    get:
+      tags:
+        - Catalogo Prodotti
+      summary: Elenco prodotti di catalogo con filtri opzionali
+      operationId: getAll_7
+      parameters:
+        - name: categoriaId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: attrezzatura
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: accessorio
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProdottoCatalogoResponse'
+    post:
+      tags:
+        - Catalogo Prodotti
+      summary: Crea un articolo a mano nel catalogo (origine MANUALE)
+      operationId: create_8
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProdottoCatalogoRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdottoCatalogoResponse'
 components:
   schemas:
     StoriaProdottoRequest:
@@ -2244,6 +2294,8 @@ components:
           type: string
         codiceFiscale:
           type: string
+        origine:
+          type: string
         tipoListino:
           type: integer
           format: int32
@@ -2288,6 +2340,8 @@ components:
         modello:
           type: string
         marca:
+          type: string
+        origine:
           type: string
         stato:
           type: string
@@ -2471,3 +2525,47 @@ components:
           - DA_FARE
           - FATTO
           - ANNULLATO
+    ProdottoCatalogoRequest:
+      required:
+        - codice
+        - descrizione
+      type: object
+      properties:
+        codice:
+          maxLength: 50
+          minLength: 0
+          type: string
+        descrizione:
+          maxLength: 255
+          minLength: 0
+          type: string
+        isAttrezzatura:
+          type: boolean
+    ProdottoCatalogoResponse:
+      type: object
+      properties:
+        articoloId:
+          type: integer
+          format: int64
+        codice:
+          type: string
+        descrizione:
+          type: string
+        categoriaId:
+          type: integer
+          format: int32
+        categoriaDescrizione:
+          type: string
+        classeCodice:
+          type: string
+        sottoclasseCodice:
+          type: string
+        isAttrezzatura:
+          type: boolean
+        isAccessorio:
+          type: boolean
+        origine:
+          type: string
+        aggiornatoIl:
+          type: string
+          format: date-time

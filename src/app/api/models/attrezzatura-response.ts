@@ -8,5 +8,6 @@ export interface AttrezzaturaResponse {
   marca?: string;
   matricola?: string;
   modello?: string;
+  origine?: string;
   stato?: string;
 }
