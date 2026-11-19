@@ -12,6 +12,8 @@ export const routes: Routes = [
   { path: 'interventi', loadChildren: () => import('./features/interventi/interventi.routes').then(m => m.INTERVENTI_ROUTES) },
   { path: 'magazzino', loadChildren: () => import('./features/magazzino/magazzino.routes').then(m => m.MAGAZZINO_ROUTES) },
   { path: 'magazzino-posizioni', loadChildren: () => import('./features/magazzino-posizioni/magazzino-posizioni.routes').then(m => m.MAGAZZINO_POSIZIONI_ROUTES) },
+  { path: 'magazzino-3d', loadComponent: () => import('./features/scaffali/magazzino-3d-page.component').then(m => m.Magazzino3dPageComponent) },
+  { path: 'scaffali', loadChildren: () => import('./features/scaffali/scaffali.routes').then(m => m.SCAFFALI_ROUTES) },
   { path: 'sync', loadComponent: () => import('./features/sync/sync-page.component').then(m => m.SyncPageComponent) },
   { path: '**', redirectTo: 'attrezzature' }
 ];

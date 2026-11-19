@@ -24,6 +24,8 @@ export class AppComponent {
       { path: '/catalogo-prodotti', label: 'Catalogo ERP' },
     ] },
     { label: 'Magazzino', items: [
+      { path: '/magazzino-3d', label: 'Magazzino 3D' },
+      { path: '/scaffali', label: 'Scaffali' },
       { path: '/magazzino', label: 'Ubicazioni' },
       { path: '/magazzino-posizioni', label: 'Posizioni articoli' },
     ] },
