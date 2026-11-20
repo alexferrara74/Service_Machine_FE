@@ -25,6 +25,13 @@ npm test
 
 `npm run build` esegue il build Angular di produzione. `npm test` avvia i test unitari Jasmine/Karma (in CI: `npx ng test --watch=false --browsers=ChromeHeadless`). Coprono il componente radice, la pagina di sincronizzazione e l'helper dei messaggi di errore.
 
+## Installazione e rilascio
+
+Il frontend **non si installa da solo**: viene compilato (`npx ng build --configuration production`, risultato in `dist/servizi-pilot-fe/browser`) e distribuito
+dentro i pacchetti della release del backend, nella cartella `web/`. È il backend a servirlo, dalla stessa porta delle API. Per installare o aggiornare usa
+l'ultima release di [`Service_Machine_BE`](https://github.com/alexferrara74/Service_Machine_BE/releases) e la sezione *Rilascio, installazione e aggiornamento*
+del suo README. I pacchetti si preparano con `deploy/crea-pacchetti.sh` di quel repository, che compila anche questo frontend.
+
 ## Tema e stili
 
 I colori vivono come variabili CSS in `src/styles.css` (`--petrol`, `--signal`, `--danger`, `--ok`, ...). Nei componenti usare `var(--nome)` invece dei codici esadecimali, così il look si cambia da un punto solo. Gli stati attrezzatura (`DISPONIBILE`, `IN_USO`, `IN_MANUTENZIONE`) e le loro etichette sono in `src/app/shared/stati-attrezzatura.ts`.
