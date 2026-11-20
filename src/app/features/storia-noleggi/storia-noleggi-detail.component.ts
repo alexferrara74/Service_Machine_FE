@@ -24,11 +24,13 @@ import { errorMessage } from '../../shared/error-message';
 import { isManuale } from '../../shared/origine';
 import { ClienteQuickCreateComponent } from './cliente-quick-create.component';
 import { AttrezzaturaCreata, AttrezzaturaQuickCreateComponent } from './attrezzatura-quick-create.component';
+import { OpzioneRicerca, SelectRicercaComponent } from '../../shared/select-ricerca.component';
+
 
 @Component({
   selector: 'app-storia-noleggi-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ClienteQuickCreateComponent, AttrezzaturaQuickCreateComponent, AdminOnlyDirective, InterventiStoricoComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ClienteQuickCreateComponent, AttrezzaturaQuickCreateComponent, AdminOnlyDirective, InterventiStoricoComponent, SelectRicercaComponent],
   template: `
 <div class="page">
   <div class="page-header">
@@ -50,39 +52,24 @@ import { AttrezzaturaCreata, AttrezzaturaQuickCreateComponent } from './attrezza
         </div>
         <div class="form-group">
           <label>Cliente *</label>
-          <select [(ngModel)]="form.clienteId" name="clienteId" class="form-control" required>
-            <option [ngValue]="undefined">Seleziona un cliente</option>
-            <optgroup label="Importati dall'ERP">
-              <option *ngFor="let c of clientiErp" [ngValue]="c.id">{{ clienteLabel(c) }}</option>
-            </optgroup>
-            <optgroup *ngIf="clientiManuali.length" label="Creati a mano">
-              <option *ngFor="let c of clientiManuali" [ngValue]="c.id">{{ clienteLabel(c) }}</option>
-            </optgroup>
-          </select>
+          <app-select-ricerca [opzioni]="opzioniClienti" placeholder="Cerca il cliente per nome o codice…" [(ngModel)]="form.clienteId" name="clienteId"></app-select-ricerca>
           <button type="button" class="link" (click)="showNewCliente = !showNewCliente; showNewAttrezzatura = false">{{ showNewCliente ? 'Chiudi' : '＋ Nuovo cliente' }}</button>
         </div>
         <app-cliente-quick-create *ngIf="showNewCliente" (created)="onClienteCreated($event)" (cancelled)="showNewCliente = false"></app-cliente-quick-create>
         <div class="form-group">
-          <label>Prodotto (attrezzatura) *</label>
-          <select [ngModel]="form.articoloId" (ngModelChange)="onArticleChange($event)" name="articoloId" class="form-control" required>
-            <option [ngValue]="undefined">Seleziona un articolo</option>
-            <optgroup label="Catalogo ERP">
-              <option *ngFor="let article of articlesErp" [ngValue]="article.articoloId">{{ articleLabel(article) }}</option>
-            </optgroup>
-            <optgroup *ngIf="articlesManuali.length" label="Creati a mano">
-              <option *ngFor="let article of articlesManuali" [ngValue]="article.articoloId">{{ articleLabel(article) }}</option>
-            </optgroup>
-          </select>
+          <label>Articolo (attrezzatura) *</label>
+          <app-select-ricerca [opzioni]="opzioniArticoli" placeholder="Cerca l’articolo per codice o descrizione…" [ngModel]="form.articoloId" (ngModelChange)="onArticleChange($event)" name="articoloId"></app-select-ricerca>
         </div>
         <div class="form-group">
           <label>Matricola *</label>
-          <input list="matricole" [(ngModel)]="form.matricola" name="matricola" class="form-control" placeholder="Matricola (automatica o manuale)" autocomplete="off" required />
+          <input list="matricole" [(ngModel)]="form.matricola" (ngModelChange)="onMatricolaChange($event)" name="matricola" class="form-control" placeholder="Matricola (automatica o manuale)" autocomplete="off" required />
+          <small *ngIf="matricolaAvviso" class="matricola-avviso">{{ matricolaAvviso }}</small>
           <datalist id="matricole">
             <option *ngFor="let a of matricoleArticolo" [value]="a.matricola">{{ a.descrizione }}</option>
           </datalist>
           <button type="button" class="link" (click)="showNewAttrezzatura = !showNewAttrezzatura; showNewCliente = false">{{ showNewAttrezzatura ? 'Chiudi' : '＋ Nuova attrezzatura o matricola' }}</button>
         </div>
-        <app-attrezzatura-quick-create *ngIf="showNewAttrezzatura" [articoloSelezionato]="articoloSelezionato"
+        <app-attrezzatura-quick-create *ngIf="showNewAttrezzatura" [articoloSelezionato]="articoloSelezionato" [articoliGiaCollegati]="articoliCollegati"
           (articoloCreato)="onArticoloCreato($event)" (created)="onAttrezzaturaCreata($event)" (cancelled)="showNewAttrezzatura = false"></app-attrezzatura-quick-create>
         <div class="form-group">
           <label>Quantità</label>
@@ -202,8 +189,29 @@ export class StoriaNoleggioDetailComponent implements OnInit {
     return this.articles.find(a => a.articoloId === this.form.articoloId);
   }
 
+  opzioniClienti: OpzioneRicerca[] = [];
+  opzioniArticoli: OpzioneRicerca[] = [];
+  matricolaAvviso = '';
+
+  private ricostruisciOpzioni(): void {
+    this.opzioniClienti = [
+      ...this.clientiErp.map(c => ({ value: c.id, label: this.clienteLabel(c), gruppo: 'Importati dall\'ERP', cerca: c.partitaIva })),
+      ...this.clientiManuali.map(c => ({ value: c.id, label: this.clienteLabel(c), gruppo: 'Creati a mano', cerca: c.partitaIva }))
+    ];
+    this.opzioniArticoli = [
+      ...this.articlesErp.map(a => ({ value: a.articoloId, label: this.articleLabel(a), gruppo: 'Catalogo ERP' })),
+      ...this.articlesManuali.map(a => ({ value: a.articoloId, label: this.articleLabel(a), gruppo: 'Creati a mano' }))
+    ];
+  }
+
+  /** Articoli già collegati a una matricola: un articolo ha una sola matricola collegata. */
+  get articoliCollegati(): number[] {
+    return this.attrezzature.filter(a => a.articoloId != null).map(a => a.articoloId!);
+  }
+
   onClienteCreated(cliente: ClienteResponse): void {
     this.clienti = [...this.clienti, cliente];
+    this.ricostruisciOpzioni();
     this.form.clienteId = cliente.id;
     this.showNewCliente = false;
   }
@@ -211,6 +219,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
   /** L'articolo creato compare subito nell'elenco, anche se la matricola poi non viene salvata. */
   onArticoloCreato(articolo: ProdottoCatalogo): void {
     if (!this.articles.some(a => a.articoloId === articolo.articoloId)) this.articles = [...this.articles, articolo];
+    this.ricostruisciOpzioni();
     this.form.articoloId = articolo.articoloId;
   }
 
@@ -225,12 +234,31 @@ export class StoriaNoleggioDetailComponent implements OnInit {
     return this.attrezzature.filter(a => a.matricola);
   }
 
-  // shortcut: l'API attrezzature non espone articoloId, si abbina per descrizione; da sostituire con articoloId se esposto.
+  // Le matricole collegate all'articolo; quelle senza collegamento (anagrafica vecchia) si abbinano ancora per descrizione.
   get matricoleArticolo(): AttrezzaturaResponse[] {
     const article = this.articles.find(a => a.articoloId === this.form.articoloId);
     if (!article) return this.matricole;
     const description = article.descrizione?.trim().toLowerCase();
-    return this.matricole.filter(a => a.descrizione?.trim().toLowerCase() === description);
+    return this.matricole.filter(a => a.articoloId === article.articoloId
+      || (a.articoloId == null && a.descrizione?.trim().toLowerCase() === description));
+  }
+
+  /** Scegliendo la matricola si ricava l'articolo: quello collegato, o l'unico a catalogo con la stessa descrizione. */
+  onMatricolaChange(matricola: string): void {
+    this.matricolaAvviso = '';
+    const attrezzatura = this.matricole.find(a => a.matricola === matricola?.trim());
+    if (!attrezzatura) return;
+    let articolo = attrezzatura.articoloId != null ? this.articles.find(a => a.articoloId === attrezzatura.articoloId) : undefined;
+    if (attrezzatura.articoloId != null && !articolo) {
+      this.matricolaAvviso = `La matricola è collegata all'articolo ID ${attrezzatura.articoloId}, che non risulta tra le attrezzature del catalogo.`;
+      return;
+    }
+    if (!articolo) {
+      const simili = this.articles.filter(a => a.descrizione?.trim().toLowerCase() === attrezzatura.descrizione?.trim().toLowerCase());
+      if (simili.length === 1) articolo = simili[0];
+    }
+    if (articolo) this.form.articoloId = articolo.articoloId;
+    else this.matricolaAvviso = 'Questa matricola non ha un articolo collegato: scegli l’articolo a mano, oppure collegalo dall’anagrafica Attrezzature.';
   }
 
   onArticleChange(articoloId: number | undefined): void {
@@ -310,6 +338,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
         this.catalogoService.getAttrezzature(),
         this.attrezzatureService.getAll6()
       ]);
+      this.ricostruisciOpzioni();
     } catch (e: any) {
       this.articleError = errorMessage(e, 'Impossibile recuperare clienti, catalogo o attrezzature');
     }
@@ -442,7 +471,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
   }
 
   async deleteItem(): Promise<void> {
-    if (!confirm(`Eliminare questo noleggio?\n\nVerranno eliminati anche il PDF allegato e lo storico delle manutenzioni. L'operazione non è reversibile.`)) return;
+    if (!confirm(`Eliminare questo noleggio?\n\nVerranno eliminati anche il PDF allegato, la configurazione delle manutenzioni e gli appuntamenti ancora da fare (con le loro foto). Un noleggio con appuntamenti chiusi o manutenzioni registrate non si può eliminare. L'operazione non è reversibile.`)) return;
     try {
       await this.service.delete1({ docId: this.id! });
       this.router.navigate(['/noleggi']);

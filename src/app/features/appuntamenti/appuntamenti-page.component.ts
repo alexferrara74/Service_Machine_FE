@@ -7,20 +7,19 @@ import { StoriaNoleggiService } from '../../api/services/storia-noleggi.service'
 import { StoriaNoleggioResponse } from '../../api/models/storia-noleggio-response';
 import { errorMessage } from '../../shared/error-message';
 import { AuthService } from '../../core/auth.service';
+import { OpzioneRicerca, SelectRicercaComponent } from '../../shared/select-ricerca.component';
+
 
 @Component({
   selector: 'app-appuntamenti-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SelectRicercaComponent],
   template: `
     <section class="page">
       <header class="page-header">
         <h1>Appuntamenti</h1>
         <form *ngIf="auth.isAdmin()" class="nuovo" (ngSubmit)="nuovo()">
-          <select class="form-control" [(ngModel)]="noleggioScelto" name="noleggio" aria-label="Noleggio">
-            <option [ngValue]="null">Scegli il noleggio…</option>
-            <option *ngFor="let n of noleggi" [ngValue]="n.docId">Doc {{ n.docId }} · {{ n.matricola || 'senza matricola' }}</option>
-          </select>
+          <app-select-ricerca class="scegli-noleggio" [opzioni]="opzioniNoleggi" placeholder="Cerca il noleggio per matricola o descrizione…" ariaLabel="Noleggio" [(ngModel)]="noleggioScelto" name="noleggio"></app-select-ricerca>
           <button class="btn btn-primary" [disabled]="noleggioScelto === null">+ Nuovo appuntamento</button>
         </form>
       </header>
@@ -51,7 +50,7 @@ import { AuthService } from '../../core/auth.service';
     </section>
   `,
   styles: [`
-    .page-header,.nuovo{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .page-header,.nuovo{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.scegli-noleggio{min-width:min(340px,100%)}
     .page-header{justify-content:space-between;margin-bottom:16px}.page-header h1{margin:0}
     .tabs{display:flex;gap:6px;margin-bottom:14px}
     .tabs button{padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--paper-2);cursor:pointer}
@@ -71,6 +70,7 @@ import { AuthService } from '../../core/auth.service';
 export class AppuntamentiPageComponent implements OnInit {
   items: Appuntamento[] = [];
   noleggi: StoriaNoleggioResponse[] = [];
+  opzioniNoleggi: OpzioneRicerca[] = [];
   noleggioScelto: number | null = null;
   loading = false;
   error = '';
@@ -85,7 +85,10 @@ export class AppuntamentiPageComponent implements OnInit {
   constructor(private service: AppuntamentiService, private noleggiService: StoriaNoleggiService, private router: Router) {}
 
   async ngOnInit(): Promise<void> {
-    this.noleggiService.getAll1().then(n => this.noleggi = n.filter(x => x.docId !== undefined)).catch(() => { /* serve solo al menu */ });
+    this.noleggiService.getAll1().then(n => {
+      this.noleggi = n.filter(x => x.docId !== undefined);
+      this.opzioniNoleggi = this.noleggi.map(x => ({ value: x.docId, label: [`Doc ${x.docId}`, x.matricola || 'senza matricola', x.descrizione].filter(Boolean).join(' · '), cerca: x.codiceArticolo }));
+    }).catch(() => { /* serve solo al menu */ });
     await this.carica();
   }
 

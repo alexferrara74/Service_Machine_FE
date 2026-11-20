@@ -15,6 +15,7 @@ import { errorMessage } from '../../shared/error-message';
 import { STATI_APPUNTAMENTO, StatoAppuntamento, statoAppuntamento } from '../../shared/stati-appuntamento';
 import { AppuntamentiExportService, FormatoExport, PeriodoExport } from './appuntamenti-export.service';
 import { AppuntamentoFotoService, FotoAppuntamentoCalendario } from './appuntamento-foto.service';
+import { OpzioneRicerca, SelectRicercaComponent } from '../../shared/select-ricerca.component';
 import { ridimensionaFoto } from '../appuntamenti/appuntamenti.service';
 import { addDays, dayKey, parseLocal, startOfDay, startOfWeek, timeOf, toLocalDateTime } from '../../shared/calendar-dates';
 
@@ -49,7 +50,7 @@ const MAX_CHIPS_PER_DAY = 3;
 @Component({
   selector: 'app-calendario-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AdminOnlyDirective],
+  imports: [CommonModule, FormsModule, AdminOnlyDirective, SelectRicercaComponent],
   templateUrl: './calendario-page.component.html',
   styleUrl: './calendario-page.component.css'
 })
@@ -383,6 +384,14 @@ export class CalendarioPageComponent implements OnInit, OnDestroy {
     } catch (error) {
       this.editorError = errorMessage(error, 'Noleggio non trovato');
     }
+  }
+
+  private opzNoleggi?: { src: StoriaNoleggioResponse[]; out: OpzioneRicerca[] };
+  get opzioniNoleggio(): OpzioneRicerca[] {
+    if (this.opzNoleggi?.src !== this.noleggiCliente) {
+      this.opzNoleggi = { src: this.noleggiCliente, out: this.noleggiCliente.map(n => ({ value: n.docId, label: this.etichettaNoleggio(n) })) };
+    }
+    return this.opzNoleggi.out;
   }
 
   etichettaNoleggio(n: StoriaNoleggioResponse): string {

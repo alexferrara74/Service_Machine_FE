@@ -129,10 +129,8 @@
         </div>
         <div class="form-group" *ngIf="clienteSelezionato">
           <label for="noleggio">Noleggio</label>
-          <select id="noleggio" class="form-control" [ngModel]="form.docId" (ngModelChange)="form.docId = $event; onNoleggioChange($event)" name="docId">
-            <option [ngValue]="null" disabled>{{ noleggiLoading ? 'Caricamento...' : 'Seleziona il noleggio' }}</option>
-            <option *ngFor="let n of noleggiCliente" [ngValue]="n.docId">{{ etichettaNoleggio(n) }}</option>
-          </select>
+          <app-select-ricerca inputId="noleggio" [opzioni]="opzioniNoleggio" [placeholder]="noleggiLoading ? 'Caricamento...' : 'Cerca il noleggio per matricola o descrizione…'"
+            [ngModel]="form.docId" (ngModelChange)="form.docId = $event; onNoleggioChange($event)" name="docId"></app-select-ricerca>
           <small *ngIf="!noleggiLoading && !noleggiCliente.length" class="hint">Questo cliente non ha noleggi censiti.</small>
           <button *ngIf="form.docId !== null && editingId !== null" type="button" class="link" (click)="vaiANoleggio()">Apri il noleggio</button>
         </div>

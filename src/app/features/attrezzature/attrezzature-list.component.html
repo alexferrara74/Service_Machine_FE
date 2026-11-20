@@ -48,6 +48,7 @@
             <th>Descrizione</th>
             <th>Marca</th>
             <th>Modello</th>
+            <th>Articolo</th>
             <th>Stato</th>
             <th>Azioni</th>
           </tr>
@@ -58,6 +59,7 @@
             <td>{{ item.descrizione }}</td>
             <td>{{ item.marca }}</td>
             <td>{{ item.modello }}</td>
+            <td>{{ item.articoloId ? (codiciArticoli.get(item.articoloId) ?? 'ID ' + item.articoloId) : '—' }}</td>
             <td><span class="badge" [class]="'badge-' + (item.stato ?? '')">{{ statoLabel(item.stato) }}</span></td>
             <td class="actions">
               <button class="btn btn-sm btn-secondary" (click)="edit(item)">{{ auth.isAdmin() ? '✏️ Modifica' : '👁 Apri' }}</button>

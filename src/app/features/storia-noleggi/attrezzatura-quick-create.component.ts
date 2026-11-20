@@ -77,6 +77,8 @@ export class AttrezzaturaQuickCreateComponent {
     this.nuovoArticolo = !value;
   }
   /** Emesso appena l'articolo esiste a catalogo, anche se la creazione della matricola poi fallisce. */
+  /** Articoli che hanno già una matricola collegata: non si possono collegare a una seconda. */
+  @Input() articoliGiaCollegati: number[] = [];
   @Output() articoloCreato = new EventEmitter<ProdottoCatalogo>();
   @Output() created = new EventEmitter<AttrezzaturaCreata>();
   @Output() cancelled = new EventEmitter<void>();
@@ -116,6 +118,7 @@ export class AttrezzaturaQuickCreateComponent {
           matricola: this.matricola.trim(),
           // La descrizione coincide con quella dell'articolo: è così che il noleggio abbina le matricole all'articolo.
           descrizione: articolo!.descrizione,
+          articoloId: this.articoliGiaCollegati.includes(articolo!.articoloId) ? undefined : articolo!.articoloId,
           marca: this.marca.trim() || undefined,
           modello: this.modello.trim() || undefined,
           stato: 'DISPONIBILE'

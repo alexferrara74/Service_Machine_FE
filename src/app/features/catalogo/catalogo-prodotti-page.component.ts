@@ -15,7 +15,7 @@ import { errorMessage } from '../../shared/error-message';
       <header class="page-header">
         <div>
           <h1>Catalogo ERP</h1>
-          <p>Prodotti e attrezzature sincronizzati dall’ERP.</p>
+          <p>Articoli, ricambi e attrezzature sincronizzati dall’ERP: ciò che si noleggia e si usa negli interventi.</p>
         </div>
         <button class="btn btn-secondary" type="button" [disabled]="loading" (click)="load()">
           Aggiorna
@@ -32,7 +32,7 @@ import { errorMessage } from '../../shared/error-message';
             Tipo
             <select class="form-control" [(ngModel)]="equipmentFilter" (ngModelChange)="currentPage = 1">
               <option value="all">Tutti</option>
-              <option value="products">Solo prodotti</option>
+              <option value="products">Solo articoli e ricambi</option>
               <option value="equipment">Solo attrezzature</option>
               <option value="accessories">Solo accessori</option>
             </select>

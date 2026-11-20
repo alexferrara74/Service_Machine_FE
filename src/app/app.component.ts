@@ -25,7 +25,7 @@ export class AppComponent {
     ] },
     { label: 'Anagrafiche', items: [
       { path: '/clienti', label: 'Clienti' },
-      { path: '/prodotti', label: 'Prodotti' },
+      { path: '/prodotti', label: 'Acquisti clienti' },
       { path: '/catalogo-prodotti', label: 'Catalogo ERP' },
     ] },
     { label: 'Magazzino', items: [

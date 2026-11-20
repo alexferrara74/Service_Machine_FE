@@ -11,29 +11,25 @@ import { ClientiService } from '../../api/services/clienti.service';
 import { ClienteResponse } from '../../api/models/cliente-response';
 import { PaginationComponent } from '../../shared/pagination.component';
 import { errorMessage } from '../../shared/error-message';
+import { OpzioneRicerca, SelectRicercaComponent } from '../../shared/select-ricerca.component';
+
 
 @Component({
   selector: 'app-storia-prodotti-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent, AdminOnlyDirective],
+  imports: [CommonModule, FormsModule, PaginationComponent, AdminOnlyDirective, SelectRicercaComponent],
   template: `
     <section class="page">
-      <header class="page-header"><h1>Prodotti</h1><button appAdmin class="btn btn-primary" (click)="create()">+ Nuova registrazione</button></header>
+      <header class="page-header"><h1>Acquisti clienti</h1><button appAdmin class="btn btn-primary" (click)="create()">+ Nuova registrazione</button></header>
       <div *ngIf="error" class="error-block">{{ error }}</div>
       <div *ngIf="customersError" class="warning-block">{{ customersError }}</div>
       <section *ngIf="editing" class="card">
-        <h2>{{ isNew ? 'Nuova registrazione prodotto' : 'Modifica registrazione' }}</h2>
+        <h2>{{ isNew ? 'Nuovo acquisto' : 'Modifica acquisto' }}</h2>
         <form (ngSubmit)="save()"><fieldset class="lock form-grid" [disabled]="!auth.isAdmin()">
           <label>Codice articolo<input class="form-control" [(ngModel)]="form.codiceArticolo" name="codice" required></label>
           <label>Articolo ID<input class="form-control" type="number" [(ngModel)]="form.articoloId" name="articolo"></label>
           <label>Cliente
-            <select class="form-control" [(ngModel)]="form.clienteId" name="cliente">
-              <option [ngValue]="undefined">Seleziona un cliente</option>
-              <option *ngIf="form.clienteId !== undefined && !hasCustomer(form.clienteId)" [ngValue]="form.clienteId">
-                Cliente {{ form.clienteId }} (dati non disponibili)
-              </option>
-              <option *ngFor="let customer of customers" [ngValue]="customer.id">{{ customerLabel(customer) }}</option>
-            </select>
+            <app-select-ricerca [opzioni]="opzioniClienteForm" voceVuota="Seleziona un cliente" placeholder="Cerca per nome o codice…" [(ngModel)]="form.clienteId" name="cliente"></app-select-ricerca>
           </label>
           <label>Categoria ID<input class="form-control" type="number" [(ngModel)]="form.categoriaId" name="categoria"></label>
           <label>Descrizione categoria<input class="form-control" [(ngModel)]="form.categoriaDescrizione" name="categoriaDescrizione"></label>
@@ -51,13 +47,10 @@ import { errorMessage } from '../../shared/error-message';
         <form class="filter-row" (ngSubmit)="filter()">
           <label>Codice articolo<input class="form-control" [(ngModel)]="codeFilter" name="codeFilter"></label>
           <label>Cliente
-            <select class="form-control" [(ngModel)]="clienteFilter" name="clienteFilter">
-              <option [ngValue]="undefined">Tutti i clienti</option>
-              <option *ngFor="let customer of customers" [ngValue]="customer.id">{{ customerLabel(customer) }}</option>
-            </select>
+            <app-select-ricerca [opzioni]="opzioniClienti" voceVuota="Tutti i clienti" placeholder="Cerca per nome o codice…" [(ngModel)]="clienteFilter" name="clienteFilter"></app-select-ricerca>
           </label>
           <label>Articolo ID<input class="form-control" type="number" [(ngModel)]="articoloFilter" name="articoloFilter"></label>
-          <button class="btn btn-secondary">Filtra prodotti</button>
+          <button class="btn btn-secondary">Filtra acquisti</button>
           <button type="button" class="btn btn-secondary" (click)="load()">Tutti</button>
         </form>
         <div *ngIf="loading" class="loading">Caricamento...</div>
@@ -76,7 +69,7 @@ import { errorMessage } from '../../shared/error-message';
           [totalItems]="items.length"
           [page]="currentPage"
           [pageSize]="pageSize"
-          label="prodotti"
+          label="acquisti"
           (pageChange)="goToPage($event)"
           (pageSizeChange)="changePageSize($event)">
         </app-pagination>
@@ -96,6 +89,25 @@ export class StoriaProdottiPageComponent implements OnInit {
   error = '';
   customersError = '';
   customers: ClienteResponse[] = [];
+
+  // le opzioni si ricalcolano solo se cambia l'elenco dei clienti (o il cliente scelto non è nell'elenco)
+  private opzCache?: { src: ClienteResponse[]; out: OpzioneRicerca[] };
+  private opzFormCache?: { src: OpzioneRicerca[]; id?: number; out: OpzioneRicerca[] };
+  get opzioniClienti(): OpzioneRicerca[] {
+    if (this.opzCache?.src !== this.customers) {
+      this.opzCache = { src: this.customers, out: this.customers.map(c => ({ value: c.id, label: this.customerLabel(c), cerca: c.partitaIva })) };
+    }
+    return this.opzCache.out;
+  }
+  get opzioniClienteForm(): OpzioneRicerca[] {
+    const base = this.opzioniClienti;
+    const id = this.form.clienteId;
+    if (this.opzFormCache?.src !== base || this.opzFormCache.id !== id) {
+      const manca = id !== undefined && id !== null && !this.hasCustomer(id);
+      this.opzFormCache = { src: base, id, out: manca ? [{ value: id, label: `Cliente ${id} (dati non disponibili)` }, ...base] : base };
+    }
+    return this.opzFormCache.out;
+  }
   id: number | null = null;
   codeFilter = '';
   clienteFilter?: number;
@@ -140,7 +152,7 @@ export class StoriaProdottiPageComponent implements OnInit {
       this.items = await this.service.getAll();
       this.currentPage = 1;
     }
-    catch (error) { this.error = errorMessage(error, 'Errore nel caricamento dei prodotti'); }
+    catch (error) { this.error = errorMessage(error, 'Errore nel caricamento degli acquisti'); }
     finally { this.loading = false; }
   }
 
@@ -152,7 +164,7 @@ export class StoriaProdottiPageComponent implements OnInit {
       else if (this.articoloFilter !== undefined) this.items = await this.service.getByArticolo({ articoloId: this.articoloFilter });
       else this.items = await this.service.getAll();
       this.currentPage = 1;
-    } catch (error) { this.error = errorMessage(error, 'Errore nella ricerca dei prodotti'); }
+    } catch (error) { this.error = errorMessage(error, 'Errore nella ricerca degli acquisti'); }
     finally { this.loading = false; }
   }
 

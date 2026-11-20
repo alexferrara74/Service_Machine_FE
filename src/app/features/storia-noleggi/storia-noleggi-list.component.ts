@@ -337,7 +337,7 @@ export class StoriaNoleggioListComponent implements OnInit {
     try {
       this.catalogo = new Map((await this.catalogoService.getAll()).map(p => [p.articoloId, p]));
     } catch (e: any) {
-      this.articleError = errorMessage(e, 'Impossibile recuperare i dettagli del prodotto');
+      this.articleError = errorMessage(e, 'Impossibile recuperare i dettagli dell’articolo');
     }
   }
 
@@ -346,7 +346,7 @@ export class StoriaNoleggioListComponent implements OnInit {
     if (articleId === undefined) return '—';
     const article = this.catalogo.get(articleId);
     const label = article ? [article.codice, article.descrizione].filter(Boolean).join(' — ') : '';
-    if (!label) return `Prodotto non trovato (ID ${articleId})`;
+    if (!label) return `Articolo non trovato (ID ${articleId})`;
     return `${label} (ID ${articleId})`;
   }
 
@@ -457,7 +457,7 @@ export class StoriaNoleggioListComponent implements OnInit {
   }
 
   async deleteItem(item: StoriaNoleggioResponse): Promise<void> {
-    if (!confirm(`Eliminare il noleggio con DocID "${item.docId}"?\n\nVerranno eliminati anche il PDF allegato e lo storico delle manutenzioni. L'operazione non è reversibile.`)) return;
+    if (!confirm(`Eliminare il noleggio con DocID "${item.docId}"?\n\nVerranno eliminati anche il PDF allegato, la configurazione delle manutenzioni e gli appuntamenti ancora da fare (con le loro foto). Un noleggio con appuntamenti chiusi o manutenzioni registrate non si può eliminare. L'operazione non è reversibile.`)) return;
     try {
       await this.service.delete1({ docId: item.docId! });
       await this.refresh();

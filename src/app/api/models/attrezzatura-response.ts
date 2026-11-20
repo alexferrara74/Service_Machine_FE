@@ -3,6 +3,7 @@
 
 export interface AttrezzaturaResponse {
   aggiornatoIl?: string;
+  articoloId?: number;
   descrizione?: string;
   id?: number;
   marca?: string;

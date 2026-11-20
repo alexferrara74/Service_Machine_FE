@@ -9,11 +9,15 @@ import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
 import { AttrezzaturaRequest } from '../../api/models/attrezzatura-request';
 import { errorMessage } from '../../shared/error-message';
 import { STATI_ATTREZZATURA } from '../../shared/stati-attrezzatura';
+import { CatalogoProdottiService } from '../catalogo/catalogo-prodotti.service';
+import { ProdottoCatalogo } from '../catalogo/prodotto-catalogo';
+import { OpzioneRicerca, SelectRicercaComponent } from '../../shared/select-ricerca.component';
+
 
 @Component({
   selector: 'app-attrezzature-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, AdminOnlyDirective],
+  imports: [CommonModule, FormsModule, AdminOnlyDirective, SelectRicercaComponent],
   templateUrl: './attrezzature-detail.component.html',
   styleUrl: './attrezzature-detail.component.css'
 })
@@ -35,19 +39,27 @@ export class AttrezzatureDetailComponent implements OnInit {
 
   readonly statiOptions = STATI_ATTREZZATURA;
 
+  // articolo del catalogo collegato alla matricola
+  articoli: ProdottoCatalogo[] = [];
+  opzioniArticoli: OpzioneRicerca[] = [];
+  creaArticolo = false;
+  codiceArticolo = '';
+
   constructor(
     private service: AttrezzatureService,
+    private catalogo: CatalogoProdottiService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
     const idParam = this.route.snapshot.paramMap.get('id');
-    if (!idParam || idParam === 'new') {
+    this.id = !idParam || idParam === 'new' ? null : Number(idParam);
+    await this.caricaArticoli();
+    if (this.id === null) {
       this.isNew = true;
       return;
     }
-    this.id = Number(idParam);
     this.loading = true;
     try {
       const data: AttrezzaturaResponse = await this.service.getById6({ id: this.id });
@@ -56,7 +68,8 @@ export class AttrezzatureDetailComponent implements OnInit {
         marca: data.marca ?? '',
         modello: data.modello ?? '',
         matricola: data.matricola ?? '',
-        stato: data.stato ?? ''
+        stato: data.stato ?? '',
+        articoloId: data.articoloId
       };
     } catch (e: any) {
       this.error = errorMessage(e, 'Errore nel caricamento');
@@ -65,10 +78,38 @@ export class AttrezzatureDetailComponent implements OnInit {
     }
   }
 
+  /** Articoli del catalogo che sono attrezzature e non già collegati a un'altra matricola (un articolo = una matricola). */
+  private async caricaArticoli(): Promise<void> {
+    try {
+      const [articoli, attrezzature] = await Promise.all([this.catalogo.getAttrezzature(), this.service.getAll6()]);
+      this.articoli = articoli;
+      const occupati = new Set(attrezzature.filter(a => a.articoloId != null && a.id !== this.id).map(a => a.articoloId!));
+      this.opzioniArticoli = articoli.filter(a => !occupati.has(a.articoloId))
+        .map(a => ({ value: a.articoloId, label: `${a.codice} — ${a.descrizione}`, gruppo: a.origine === 'MANUALE' ? 'Creati a mano' : 'Catalogo ERP' }))
+        .sort((x, y) => (x.gruppo === y.gruppo ? 0 : x.gruppo === 'Catalogo ERP' ? -1 : 1));
+    } catch {
+      this.opzioniArticoli = []; // il collegamento è facoltativo: senza elenco il modulo funziona comunque
+    }
+  }
+
+  onArticoloChange(articoloId: number | undefined): void {
+    const articolo = this.articoli.find(a => a.articoloId === articoloId);
+    if (articolo && !this.form.descrizione?.trim()) this.form.descrizione = articolo.descrizione;
+  }
+
   async save(): Promise<void> {
     this.saving = true;
     this.error = '';
     try {
+      if (this.creaArticolo) {
+        if (!this.codiceArticolo.trim()) throw new Error('Il codice del nuovo articolo è obbligatorio.');
+        if (!this.form.descrizione?.trim()) throw new Error('La descrizione è obbligatoria: diventa anche la descrizione del nuovo articolo.');
+        const articolo = await this.catalogo.create({ codice: this.codiceArticolo.trim(), descrizione: this.form.descrizione.trim(), isAttrezzatura: true });
+        // se la matricola poi non si salva, un nuovo tentativo riusa questo articolo invece di crearne un doppione
+        this.form.articoloId = articolo.articoloId;
+        this.articoli = [...this.articoli, articolo];
+        this.creaArticolo = false;
+      }
       if (this.isNew) {
         await this.service.create6({ body: this.form });
       } else {
@@ -76,7 +117,7 @@ export class AttrezzatureDetailComponent implements OnInit {
       }
       this.router.navigate(['/attrezzature']);
     } catch (e: any) {
-      this.error = errorMessage(e, 'Errore nel salvataggio');
+      this.error = e instanceof Error ? e.message : errorMessage(e, 'Errore nel salvataggio');
     } finally {
       this.saving = false;
     }

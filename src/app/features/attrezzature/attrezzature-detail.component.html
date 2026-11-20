@@ -35,6 +35,19 @@
             <option *ngFor="let s of statiOptions" [value]="s.value">{{ s.label }}</option>
           </select>
         </div>
+        <div class="form-group wide">
+          <label>Articolo del catalogo</label>
+          <app-select-ricerca *ngIf="!creaArticolo" [opzioni]="opzioniArticoli" voceVuota="Nessun articolo collegato"
+            placeholder="Cerca per codice o descrizione…" [(ngModel)]="form.articoloId" (ngModelChange)="onArticoloChange($event)" name="articoloId"></app-select-ricerca>
+          <ng-container *ngIf="creaArticolo">
+            <input type="text" [(ngModel)]="codiceArticolo" name="codiceArticolo" class="form-control" maxlength="50" placeholder="Codice del nuovo articolo">
+            <small class="hint">Il nuovo articolo avrà la descrizione indicata sopra.</small>
+          </ng-container>
+          <label *ngIf="!form.articoloId || creaArticolo" class="check">
+            <input type="checkbox" [(ngModel)]="creaArticolo" name="creaArticolo"> Crea un nuovo articolo a catalogo per questa matricola
+          </label>
+          <small class="hint">Collegandolo, la matricola e il suo articolo si trovano insieme quando la metti in noleggio.</small>
+        </div>
       </div>
       </fieldset><div class="form-actions">
         <button appAdmin type="submit" class="btn btn-primary" [disabled]="saving">

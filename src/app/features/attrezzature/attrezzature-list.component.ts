@@ -9,6 +9,7 @@ import { AttrezzaturaResponse } from '../../api/models/attrezzatura-response';
 import { PaginationComponent } from '../../shared/pagination.component';
 import { errorMessage } from '../../shared/error-message';
 import { STATI_ATTREZZATURA, statoLabel } from '../../shared/stati-attrezzatura';
+import { CatalogoProdottiService } from '../catalogo/catalogo-prodotti.service';
 
 @Component({
   selector: 'app-attrezzature-list',
@@ -31,9 +32,13 @@ export class AttrezzatureListComponent implements OnInit {
   pageSize = 10;
   currentPage = 1;
 
-  constructor(private service: AttrezzatureService, private router: Router) {}
+  /** codice dell'articolo collegato, per articoloId */
+  codiciArticoli = new Map<number, string>();
+
+  constructor(private service: AttrezzatureService, private catalogo: CatalogoProdottiService, private router: Router) {}
 
   async ngOnInit(): Promise<void> {
+    this.catalogo.getAttrezzature().then(a => this.codiciArticoli = new Map(a.map(x => [x.articoloId, x.codice]))).catch(() => { /* colonna solo informativa */ });
     await this.load();
   }
 
