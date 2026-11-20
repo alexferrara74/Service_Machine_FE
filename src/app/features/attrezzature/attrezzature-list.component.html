@@ -59,7 +59,8 @@
             <td>{{ item.descrizione }}</td>
             <td>{{ item.marca }}</td>
             <td>{{ item.modello }}</td>
-            <td>{{ item.articoloId ? (codiciArticoli.get(item.articoloId) ?? 'ID ' + item.articoloId) : '—' }}</td>
+            <td><span *ngIf="item.articoloId; else senzaArticolo">{{ codiciArticoli.get(item.articoloId) ?? 'ID ' + item.articoloId }}</span>
+              <ng-template #senzaArticolo><span class="senza-articolo" title="Non si può mettere in noleggio finché non ha un articolo: si collega qui o dal modulo del noleggio">⚠ senza articolo</span></ng-template></td>
             <td><span class="badge" [class]="'badge-' + (item.stato ?? '')">{{ statoLabel(item.stato) }}</span></td>
             <td class="actions">
               <button class="btn btn-sm btn-secondary" (click)="edit(item)">{{ auth.isAdmin() ? '✏️ Modifica' : '👁 Apri' }}</button>

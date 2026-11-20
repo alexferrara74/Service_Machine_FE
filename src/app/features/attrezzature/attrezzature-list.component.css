@@ -24,3 +24,4 @@
 .badge-DISPONIBILE { background: var(--ok-bg); color: var(--ok); }
 .badge-IN_USO { background: var(--info-bg); color: var(--info); }
 .badge-IN_MANUTENZIONE { background: var(--warn-bg); color: var(--warn); }
+.senza-articolo { color: var(--warn); font-size: 13px; }

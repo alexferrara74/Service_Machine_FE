@@ -11,6 +11,7 @@ import { errorMessage } from '../../shared/error-message';
 import { STATI_ATTREZZATURA } from '../../shared/stati-attrezzatura';
 import { CatalogoProdottiService } from '../catalogo/catalogo-prodotti.service';
 import { ProdottoCatalogo } from '../catalogo/prodotto-catalogo';
+import { proponiCodiceArticolo } from '../../shared/codice-articolo';
 import { OpzioneRicerca, SelectRicercaComponent } from '../../shared/select-ricerca.component';
 
 
@@ -44,6 +45,7 @@ export class AttrezzatureDetailComponent implements OnInit {
   opzioniArticoli: OpzioneRicerca[] = [];
   creaArticolo = false;
   codiceArticolo = '';
+  codiceModificato = false;
 
   constructor(
     private service: AttrezzatureService,
@@ -58,6 +60,7 @@ export class AttrezzatureDetailComponent implements OnInit {
     await this.caricaArticoli();
     if (this.id === null) {
       this.isNew = true;
+      this.creaArticolo = true; // una nuova matricola nasce con il suo articolo: senza non si potrebbe mettere in noleggio
       return;
     }
     this.loading = true;
@@ -90,6 +93,17 @@ export class AttrezzatureDetailComponent implements OnInit {
     } catch {
       this.opzioniArticoli = []; // il collegamento è facoltativo: senza elenco il modulo funziona comunque
     }
+  }
+
+  /** Finché il codice non è stato scritto a mano, segue la matricola (es. M-1001 -> ATT-M-1001). */
+  onMatricola(matricola: string): void {
+    if (this.creaArticolo && !this.codiceModificato) {
+      this.codiceArticolo = matricola?.trim() ? proponiCodiceArticolo(matricola, this.articoli.map(a => a.codice)) : '';
+    }
+  }
+
+  onCreaArticolo(): void {
+    if (this.creaArticolo) { this.form.articoloId = undefined; this.onMatricola(this.form.matricola); }
   }
 
   onArticoloChange(articoloId: number | undefined): void {

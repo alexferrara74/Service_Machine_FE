@@ -25,6 +25,7 @@ import { isManuale } from '../../shared/origine';
 import { ClienteQuickCreateComponent } from './cliente-quick-create.component';
 import { AttrezzaturaCreata, AttrezzaturaQuickCreateComponent } from './attrezzatura-quick-create.component';
 import { OpzioneRicerca, SelectRicercaComponent } from '../../shared/select-ricerca.component';
+import { proponiCodiceArticolo } from '../../shared/codice-articolo';
 
 
 @Component({
@@ -62,15 +63,22 @@ import { OpzioneRicerca, SelectRicercaComponent } from '../../shared/select-rice
         </div>
         <div class="form-group">
           <label>Matricola *</label>
-          <input list="matricole" [(ngModel)]="form.matricola" (ngModelChange)="onMatricolaChange($event)" name="matricola" class="form-control" placeholder="Matricola (automatica o manuale)" autocomplete="off" required />
+          <app-select-ricerca [opzioni]="opzioniMatricole" placeholder="Cerca per matricola, descrizione o marca…" [ngModel]="form.matricola" (ngModelChange)="onMatricolaChange($event)" name="matricola"></app-select-ricerca>
           <small *ngIf="matricolaAvviso" class="matricola-avviso">{{ matricolaAvviso }}</small>
-          <datalist id="matricole">
-            <option *ngFor="let a of matricoleArticolo" [value]="a.matricola">{{ a.descrizione }}</option>
-          </datalist>
           <button type="button" class="link" (click)="showNewAttrezzatura = !showNewAttrezzatura; showNewCliente = false">{{ showNewAttrezzatura ? 'Chiudi' : '＋ Nuova attrezzatura o matricola' }}</button>
         </div>
         <app-attrezzatura-quick-create *ngIf="showNewAttrezzatura" [articoloSelezionato]="articoloSelezionato" [articoliGiaCollegati]="articoliCollegati"
           (articoloCreato)="onArticoloCreato($event)" (created)="onAttrezzaturaCreata($event)" (cancelled)="showNewAttrezzatura = false"></app-attrezzatura-quick-create>
+        <div *ngIf="senzaArticolo" class="articolo-mancante">
+          <strong>La matricola {{ senzaArticolo.matricola }} non ha ancora un articolo a catalogo.</strong>
+          <p>Il noleggio ha bisogno di un articolo: crealo adesso, resterà collegato a questa matricola e comparirà anche nell'elenco degli articoli.</p>
+          <div class="articolo-mancante-campi">
+            <label>Codice articolo<input class="form-control" [(ngModel)]="nuovoCodice" name="nuovoCodice" maxlength="50"></label>
+            <label>Descrizione<input class="form-control" [(ngModel)]="nuovaDescrizione" name="nuovaDescrizione" maxlength="255"></label>
+          </div>
+          <div *ngIf="erroreArticolo" class="article-warning">⚠️ {{ erroreArticolo }}</div>
+          <button type="button" class="btn btn-secondary" [disabled]="creandoArticolo" (click)="creaArticoloPerMatricola()">{{ creandoArticolo ? 'Creazione…' : 'Crea articolo e collega' }}</button>
+        </div>
         <div class="form-group">
           <label>Quantità</label>
           <input type="number" min="0" [(ngModel)]="form.quantita" name="quantita" class="form-control" placeholder="Quantità" />
@@ -141,6 +149,12 @@ import { OpzioneRicerca, SelectRicercaComponent } from '../../shared/select-rice
 .loading{text-align:center;padding:40px;color:var(--muted)}
 .error-block{background:var(--danger-bg);color:var(--danger);padding:12px 16px;border-radius:8px;margin-bottom:12px}
 .article-info{margin-top:16px;padding:12px;background:var(--info-bg);border-radius:8px;color:var(--info)}
+.articolo-mancante{grid-column:1/-1;padding:14px;border:1px solid var(--warn);background:var(--warn-bg);border-radius:8px;display:grid;gap:10px}
+.articolo-mancante p{margin:0;color:var(--ink)}
+.articolo-mancante-campi{display:grid;grid-template-columns:1fr 2fr;gap:12px}
+.articolo-mancante label{display:grid;gap:6px;font-weight:600;font-size:13px;color:var(--muted)}
+.articolo-mancante .btn{justify-self:start}
+.matricola-avviso{color:var(--muted)}
 .article-warning{margin-top:12px;padding:10px;background:var(--warn-bg);color:var(--warn);border-radius:8px}
 .document-section{margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
 .document-section h2{margin:0 0 12px;color:var(--ink);font-size:18px}
@@ -191,7 +205,16 @@ export class StoriaNoleggioDetailComponent implements OnInit {
 
   opzioniClienti: OpzioneRicerca[] = [];
   opzioniArticoli: OpzioneRicerca[] = [];
+  opzioniMatricole: OpzioneRicerca[] = [];
   matricolaAvviso = '';
+
+  // matricola scelta che non ha ancora un articolo: si crea e si collega al volo, così non si resta mai bloccati
+  senzaArticolo?: AttrezzaturaResponse;
+  nuovoCodice = '';
+  nuovaDescrizione = '';
+  creandoArticolo = false;
+  erroreArticolo = '';
+  private articoloAppenaCreato?: ProdottoCatalogo;
 
   private ricostruisciOpzioni(): void {
     this.opzioniClienti = [
@@ -202,6 +225,22 @@ export class StoriaNoleggioDetailComponent implements OnInit {
       ...this.articlesErp.map(a => ({ value: a.articoloId, label: this.articleLabel(a), gruppo: 'Catalogo ERP' })),
       ...this.articlesManuali.map(a => ({ value: a.articoloId, label: this.articleLabel(a), gruppo: 'Creati a mano' }))
     ];
+    // Matricole: tutte le attrezzature, quelle dell'articolo scelto per prime
+    const voce = (a: AttrezzaturaResponse, gruppo?: string): OpzioneRicerca => ({
+      value: a.matricola,
+      label: [a.matricola, a.descrizione, [a.marca, a.modello].filter(Boolean).join(' ')].filter(Boolean).join(' — ') + (a.articoloId == null ? ' (senza articolo)' : ''),
+      gruppo,
+      cerca: [a.marca, a.modello].filter(Boolean).join(' ')
+    });
+    if (this.form.articoloId == null) {
+      this.opzioniMatricole = this.matricole.map(a => voce(a));
+    } else {
+      const sue = this.matricoleArticolo;
+      this.opzioniMatricole = [
+        ...sue.map(a => voce(a, "Dell'articolo scelto")),
+        ...this.matricole.filter(a => !sue.includes(a)).map(a => voce(a, 'Altre attrezzature'))
+      ];
+    }
   }
 
   /** Articoli già collegati a una matricola: un articolo ha una sola matricola collegata. */
@@ -226,6 +265,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
   onAttrezzaturaCreata(creata: AttrezzaturaCreata): void {
     this.onArticoloCreato(creata.articolo);
     this.attrezzature = [...this.attrezzature, creata.attrezzatura];
+    this.ricostruisciOpzioni();
     this.form.matricola = creata.attrezzatura.matricola ?? '';
     this.showNewAttrezzatura = false;
   }
@@ -245,7 +285,10 @@ export class StoriaNoleggioDetailComponent implements OnInit {
 
   /** Scegliendo la matricola si ricava l'articolo: quello collegato, o l'unico a catalogo con la stessa descrizione. */
   onMatricolaChange(matricola: string): void {
+    this.form.matricola = matricola ?? '';
     this.matricolaAvviso = '';
+    this.senzaArticolo = undefined;
+    this.erroreArticolo = '';
     const attrezzatura = this.matricole.find(a => a.matricola === matricola?.trim());
     if (!attrezzatura) return;
     let articolo = attrezzatura.articoloId != null ? this.articles.find(a => a.articoloId === attrezzatura.articoloId) : undefined;
@@ -257,8 +300,46 @@ export class StoriaNoleggioDetailComponent implements OnInit {
       const simili = this.articles.filter(a => a.descrizione?.trim().toLowerCase() === attrezzatura.descrizione?.trim().toLowerCase());
       if (simili.length === 1) articolo = simili[0];
     }
-    if (articolo) this.form.articoloId = articolo.articoloId;
-    else this.matricolaAvviso = 'Questa matricola non ha un articolo collegato: scegli l’articolo a mano, oppure collegalo dall’anagrafica Attrezzature.';
+    if (articolo) {
+      this.form.articoloId = articolo.articoloId;
+    } else {
+      // nessun articolo: lo si propone da creare (codice e descrizione già compilati) invece di lasciare l'utente senza scelta
+      this.form.articoloId = undefined;
+      this.senzaArticolo = attrezzatura;
+      this.nuovoCodice = proponiCodiceArticolo(attrezzatura.matricola ?? '', this.articles.map(a => a.codice));
+      this.nuovaDescrizione = attrezzatura.descrizione?.trim() || [attrezzatura.marca, attrezzatura.modello].filter(Boolean).join(' ') || attrezzatura.matricola || '';
+    }
+    this.ricostruisciOpzioni();
+  }
+
+  async creaArticoloPerMatricola(): Promise<void> {
+    const att = this.senzaArticolo;
+    if (!att || this.creandoArticolo) return;
+    if (!this.nuovoCodice.trim() || !this.nuovaDescrizione.trim()) { this.erroreArticolo = 'Codice e descrizione dell’articolo sono obbligatori.'; return; }
+    this.creandoArticolo = true;
+    this.erroreArticolo = '';
+    try {
+      // se il collegamento fallisce, un nuovo tentativo riusa l'articolo già creato invece di farne un doppione
+      let articolo = this.articoloAppenaCreato;
+      if (!articolo) {
+        articolo = await this.catalogoService.create({ codice: this.nuovoCodice.trim(), descrizione: this.nuovaDescrizione.trim(), isAttrezzatura: true });
+        this.articoloAppenaCreato = articolo;
+        this.onArticoloCreato(articolo);
+      }
+      const aggiornata = await this.attrezzatureService.update6({
+        id: att.id!,
+        body: { matricola: att.matricola!, descrizione: att.descrizione, modello: att.modello, marca: att.marca, stato: att.stato, articoloId: articolo.articoloId }
+      });
+      this.attrezzature = this.attrezzature.map(a => a.id === aggiornata.id ? aggiornata : a);
+      this.form.articoloId = articolo.articoloId;
+      this.senzaArticolo = undefined;
+      this.articoloAppenaCreato = undefined;
+      this.ricostruisciOpzioni();
+    } catch (e) {
+      this.erroreArticolo = errorMessage(e, 'Errore nella creazione dell’articolo');
+    } finally {
+      this.creandoArticolo = false;
+    }
   }
 
   onArticleChange(articoloId: number | undefined): void {
@@ -266,6 +347,9 @@ export class StoriaNoleggioDetailComponent implements OnInit {
     const matches = articoloId === undefined ? [] : this.matricoleArticolo;
     // Una sola matricola nota: precompilata; altrimenti campo libero.
     this.form.matricola = matches.length === 1 ? matches[0].matricola! : '';
+    this.senzaArticolo = undefined;
+    this.matricolaAvviso = '';
+    this.ricostruisciOpzioni();
   }
 
   form: StoriaNoleggioRequest = {
@@ -312,6 +396,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
         dataDoc: data.dataDoc ?? '',
         sezionale: data.sezionale ?? ''
       };
+      this.ricostruisciOpzioni(); // l'elenco delle matricole dipende dall'articolo del noleggio
       await this.loadDocumentMetadata();
       this.appuntamentiService.perNoleggio(this.id).then(a => this.appuntamenti = a).catch(() => { /* sezione informativa */ });
       this.manutenzioniService.getEventi(this.id).then(e => this.eventi = e).catch(() => { /* sezione informativa */ });
@@ -346,6 +431,7 @@ export class StoriaNoleggioDetailComponent implements OnInit {
 
   private validate(): string {
     if (!this.form.clienteId) return 'Il cliente è obbligatorio.';
+    if (this.senzaArticolo) return `La matricola ${this.senzaArticolo.matricola} non ha un articolo: premi «Crea articolo e collega», oppure scegli un'altra matricola.`;
     if (!this.form.articoloId) return "L'articolo è obbligatorio.";
     if (!this.form.dataDoc) return 'La data del noleggio è obbligatoria.';
     if (!this.form.matricola?.trim()) return 'La matricola è obbligatoria.';
